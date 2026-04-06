@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "password",
+    "database": "sums_db",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "postgres",
+    "password": "password",
+    "database": "sums_db_test",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "postgres",
+    "password": "your_production_password",
+    "database": "sums_db_prod",
+    "host": "your_production_host",
+    "port": 5432,
+    "dialect": "postgres"
+  }
+}
