@@ -1,65 +1,90 @@
-// import { body, param, query, validationResult } from 'express-validator';
+import { body, param, query, validationResult } from 'express-validator';
+import { Request, Response, NextFunction } from 'express';
 
-// export const validateRegister = [
-//   body('email').isEmail().normalizeEmail(),
-//   body('password').isLength({ min: 6 }).trim().escape(),
-//   body('fullName').notEmpty().trim().escape(),
-//   body('phone').optional().isMobilePhone('any')
-// ];
+export const validateRegister = [
+  body('email')
+    .isEmail().withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+  body('password')
+    .isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
+    .trim().escape(),
+  body('fullName')
+    .notEmpty().withMessage('Full name is required')
+    .trim().escape(),
+  body('phone')
+    .optional({ checkFalsy: true })
+    .isMobilePhone('any').withMessage('Please provide a valid phone number')
+];
 
-// export const validateLogin = [
-//   body('email').isEmail().normalizeEmail(),
-//   body('password').notEmpty().escape()
-// ];
+export const validateCreateDriver = [
+  ...validateRegister,
+  body('licenseNumber')
+    .notEmpty().withMessage('License number is required')
+    .trim().escape()
+];
 
-// export const validateCreateTransaction = [
-//   body('userId').isUUID(),
-//   body('type').isIn(['debit', 'credit']),
-//   body('amount').isFloat({ min: 0.01 }),
-//   body('description').notEmpty().trim().escape()
-// ];
+export const validateLogin = [
+  body('email')
+    .isEmail().withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+  body('password')
+    .notEmpty().withMessage('Password is required')
+    .escape()
+];
 
-// export const validateCreateTrip = [
-//   body('userId').isUUID(),
-//   body('busId').isUUID(),
-//   body('routeId').isUUID(),
-//   body('startStopId').isUUID(),
-//   body('endStopId').isUUID(),
-//   body('fare').isFloat({ min: 0 })
-// ];
+export const validateCreateTransaction = [
+  body('userId').isUUID().withMessage('Invalid User ID format'),
+  body('type').isIn(['debit', 'credit']).withMessage('Transaction type must be either debit or credit'),
+  body('amount').isFloat({ min: 0.01 }).withMessage('Amount must be greater than 0'),
+  body('description').notEmpty().withMessage('Description is required').trim().escape()
+];
 
-// export const validateCreateRoute = [
-//   body('name').notEmpty().trim().escape(),
-//   body('startPoint').notEmpty().trim().escape(),
-//   body('endPoint').notEmpty().trim().escape(),
-//   body('distance').isFloat({ min: 0 }),
-//   body('estimatedDuration').isInt({ min: 1 })
-// ];
+export const validateCreateTrip = [
+  body('userId').isUUID().withMessage('Invalid User ID'),
+  body('busId').isUUID().withMessage('Invalid Bus ID'),
+  body('routeId').isUUID().withMessage('Invalid Route ID'),
+  body('startStopId').isUUID().withMessage('Invalid Start Stop ID'),
+  body('endStopId').isUUID().withMessage('Invalid End Stop ID'),
+  body('fare').isFloat({ min: 0 }).withMessage('Fare cannot be negative')
+];
 
-// export const validateCreateStop = [
-//   body('name').notEmpty().trim().escape(),
-//   body('routeId').isUUID(),
-//   body('latitude').isFloat({ min: -90, max: 90 }),
-//   body('longitude').isFloat({ min: -180, max: 180 }),
-//   body('sequenceNumber').isInt({ min: 1 })
-// ];
+export const validateCreateRoute = [
+  body('name').notEmpty().withMessage('Route name is required').trim().escape(),
+  body('startPoint').notEmpty().withMessage('Start point is required').trim().escape(),
+  body('endPoint').notEmpty().withMessage('End point is required').trim().escape(),
+  body('distance').isFloat({ min: 0 }).withMessage('Distance must be a positive number'),
+  body('estimatedDuration').isInt({ min: 1 }).withMessage('Estimated duration must be positive')
+];
 
-// export const validatePagination = [
-//   query('page').optional().isInt({ min: 1 }).toInt(),
-//   query('limit').optional().isInt({ min: 1, max: 100 }).toInt()
-// ];
+export const validateCreateStop = [
+  body('name').notEmpty().withMessage('Stop name is required').trim().escape(),
+  body('routeId').isUUID().withMessage('Invalid Route ID'),
+  body('latitude').isFloat({ min: -90, max: 90 }).withMessage('Invalid latitude'),
+  body('longitude').isFloat({ min: -180, max: 180 }).withMessage('Invalid longitude'),
+  body('sequenceNumber').isInt({ min: 1 }).withMessage('Sequence number must be at least 1')
+];
 
-// export const validateUUID = (paramName: string = 'id') => [
-//   param(paramName).isUUID()
-// ];
+export const validatePagination = [
+  query('page').optional().isInt({ min: 1 }).withMessage('Page parameter must be a positive integer').toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100').toInt()
+];
 
-// export const handleValidationErrors = (req: any, res: any, next: any) => {
-//   const errors = validationResult(req);
-//   if (!errors.isEmpty()) {
-//     return res.status(400).json({
-//       success: false,
-//       errors: errors.array()
-//     });
-//   }
-//   next();
-// };
+export const validateUUID = (paramName: string = 'id') => [
+  param(paramName).isUUID().withMessage(`Invalid ${paramName} format`)
+];
+
+export const handleValidationErrors = (req: Request, res: Response, next: NextFunction): void => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: errors.array().map(err => ({
+        field: err.type === 'field' ? err.path : '',
+        message: err.msg
+      }))
+    });
+    return;
+  }
+  next();
+};

@@ -1,34 +1,34 @@
-// import { sequelize } from '../config/database';
-// import {
-//     Bus,
-//     GPSCoordinate,
-//     Incident,
-//     Route,
-//     Schedule,
-//     SmartCard,
-//     Stop,
-//     TapEvent,
-//     Transaction,
-//     Trip,
-//     User,
-//     Wallet
-// } from '../models';
+import { sequelize } from '../config/database';
+import {
+    // Bus,
+    // GPSCoordinate,
+    // Incident,
+    // Route,
+    // Schedule,
+    SmartCard,
+    // Stop,
+    // TapEvent,
+    // Transaction,
+    // Trip,
+    User,
+    Wallet
+} from '../models';
 
-// // Define associations
-// export function initializeAssociations(): void {
-//   // User associations
-//   User.hasOne(Wallet, { foreignKey: 'userId' });
+// Define associations
+export function initializeAssociations(): void {
+  // User associations
+  User.hasOne(Wallet, { foreignKey: 'userId' });
 //   User.hasMany(SmartCard, { foreignKey: 'userId' });
 //   User.hasMany(Transaction, { foreignKey: 'userId' });
 //   User.hasMany(Trip, { foreignKey: 'userId' });
 //   User.hasMany(TapEvent, { foreignKey: 'userId' });
 
-//   // SmartCard associations
-//   SmartCard.belongsTo(User, { foreignKey: 'userId' });
+  // SmartCard associations
+  SmartCard.belongsTo(User, { foreignKey: 'userId' });
 //   SmartCard.hasMany(TapEvent, { foreignKey: 'cardId' });
 
-//   // Wallet associations
-//   Wallet.belongsTo(User, { foreignKey: 'userId' });
+  // Wallet associations
+  Wallet.belongsTo(User, { foreignKey: 'userId' });
 
 //   // Transaction associations
 //   Transaction.belongsTo(User, { foreignKey: 'userId' });
@@ -52,12 +52,12 @@
 //   Stop.hasMany(Trip, { foreignKey: 'endStopId' });
 //   Stop.hasMany(TapEvent, { foreignKey: 'stopId' });
 
-//   // Trip associations
+  // Trip associations
 //   Trip.belongsTo(User, { foreignKey: 'userId' });
 //   Trip.belongsTo(Bus, { foreignKey: 'busId' });
 //   Trip.belongsTo(Route, { foreignKey: 'routeId' });
 
-//   // TapEvent associations
+  // TapEvent associations
 //   TapEvent.belongsTo(User, { foreignKey: 'userId' });
 //   TapEvent.belongsTo(SmartCard, { foreignKey: 'cardId' });
 //   TapEvent.belongsTo(Bus, { foreignKey: 'busId' });
@@ -72,6 +72,6 @@
 //   // Schedule associations
 //   Schedule.belongsTo(Route, { foreignKey: 'routeId' });
 //   Schedule.belongsTo(Bus, { foreignKey: 'busId', allowNull: true });
-// }
+}
 
-// export default sequelize;
+export default sequelize;

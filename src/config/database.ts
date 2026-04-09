@@ -1,26 +1,31 @@
-// import { Sequelize, SequelizeOptions } from 'sequelize';
-// import config from './env';
+import { Sequelize, Options } from 'sequelize';
+import config from './env';
 
-// const sequelizeConfig: SequelizeOptions = {
-//   host: config.database.host,
-//   port: config.database.port,
-//   database: config.database.name,
-//   username: config.database.user,
-//   password: config.database.password,
-//   dialect: config.database.dialect,
-//   logging: config.env === 'development' ? console.log : false,
-//   pool: {
-//     max: 5,
-//     min: 0,
-//     acquire: 30000,
-//     idle: 10000
-//   },
-//   define: {
-//     timestamps: true,
-//     underscored: true
-//   }
-// };
+if (!config.databaseUrl) {
+  throw new Error("DATABASE_URL is not set in the environment variables.");
+}
 
-// export const sequelize = new Sequelize(sequelizeConfig);
+const sequelizeConfig: Options = {
+  dialect: 'postgres',
+  logging: config.env === 'development' ? console.log : false,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    }
+  },
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  },
+  define: {
+    timestamps: true,
+    underscored: true
+  }
+};
 
-// export default sequelizeConfig;
+export const sequelize = new Sequelize(config.databaseUrl, sequelizeConfig);
+
+export default sequelizeConfig;
