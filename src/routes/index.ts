@@ -1,5 +1,6 @@
 import express from 'express';
 import authRoutes from './authRoutes';
+import userRoutes from './userRoutes';
 // import busRoutes from './busRoutes';
 // import gpsRoutes from './gpsRoutes';
 // import incidentRoutes from './incidentRoutes';
@@ -12,6 +13,7 @@ const router = express.Router();
 
 //API v1 Routes
 router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
 // router.use('/wallet', walletRoutes);
 // router.use('/trips', tripRoutes);
 // router.use('/buses', busRoutes);
