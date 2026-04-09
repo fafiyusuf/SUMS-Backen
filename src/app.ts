@@ -1,48 +1,53 @@
-// import cors from 'cors';
-// import express, { Express, Request, Response } from 'express';
-// import helmet from 'helmet';
-// import morgan from 'morgan';
-// import config from './config/env';
-// import errorHandler from './middleware/errorHandler';
-// import { limiter } from './middleware/rateLimiter';
-// import routes from './routes';
+import cors from 'cors';
+import express, { Express, Request, Response } from 'express';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
+import config from './config/env';
+import { swaggerSpec } from './config/swagger';
+import errorHandler from './middleware/errorHandler';
+import { limiter } from './middleware/rateLimiter';
+import routes from './routes';
 
-// const app: Express = express();
+const app: Express = express();
 
-// // Middleware
-// app.use(helmet());
-// app.use(cors({
-//   origin: config.cors.origin,
-//   credentials: true
-// }));
-// app.use(morgan('dev'));
-// app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
+// Middleware
+app.use(helmet());
+app.use(cors({
+  origin: config.cors.origin,
+  credentials: true
+}));
+app.use(morgan('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// // Rate limiting
-// app.use(limiter);
+// Rate limiting
+app.use(limiter);
 
-// // Health check
-// app.get('/health', (req: Request, res: Response) => {
-//   res.json({
-//     status: 'OK',
-//     timestamp: new Date(),
-//     environment: config.env
-//   });
-// });
+// Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// // API Routes
-// app.use('/api/v1', routes);
+// Health check
+app.get('/health', (_req: Request, res: Response) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date(),
+    environment: config.env
+  });
+});
 
-// // 404 Handler
-// app.use((req: Request, res: Response) => {
-//   res.status(404).json({
-//     success: false,
-//     message: 'Route not found'
-//   });
-// });
+// API Routes
+app.use('/api/v1', routes);
 
-// // Error Handler (must be last)
-// app.use(errorHandler);
+// 404 Handler
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
+});
 
-// export default app;
+// Error Handler (must be last)
+app.use(errorHandler);
+
+export default app;

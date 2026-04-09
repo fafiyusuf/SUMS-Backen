@@ -1,27 +1,27 @@
-// import { NextFunction, Request, Response } from 'express';
-// import logger from '../utils/logger';
+import { NextFunction, Request, Response } from 'express';
+import logger from '../utils/logger';
 
-// interface ApiError extends Error {
-//   status?: number;
-//   statusCode?: number;
-// }
+interface ApiError extends Error {
+  status?: number;
+  statusCode?: number;
+}
 
-// export const errorHandler = (
-//   err: ApiError,
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): void => {
-//   const status = err.status || err.statusCode || 500;
-//   const message = err.message || 'Internal server error';
+export const errorHandler = (
+  err: ApiError,
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+): void => {
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || 'Internal server error';
 
-//   logger.error(`Error: ${status} - ${message}`);
+  logger.error(`Error: ${status} - ${message}`);
 
-//   res.status(status).json({
-//     success: false,
-//     message,
-//     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-//   });
-// };
+  res.status(status).json({
+    success: false,
+    message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+};
 
-// export default errorHandler;
+export default errorHandler;
