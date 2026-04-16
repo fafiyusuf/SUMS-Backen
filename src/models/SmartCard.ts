@@ -5,7 +5,9 @@ export interface SmartCardAttributes {
   id: string;
   cardId: string;
   userId: string;
-  isActive: boolean;
+  status: 'ACTIVE' | 'SUSPENDED';
+  telebirrPhone?: string | null;
+  activatedAt?: Date | null;
   lastUsedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -17,7 +19,9 @@ export class SmartCard extends Model<SmartCardAttributes, SmartCardCreationAttri
   public id!: string;
   public cardId!: string;
   public userId!: string;
-  public isActive!: boolean;
+  public status!: 'ACTIVE' | 'SUSPENDED';
+  public telebirrPhone?: string | null;
+  public activatedAt?: Date | null;
   public lastUsedAt?: Date;
 
   public readonly createdAt!: Date;
@@ -44,9 +48,17 @@ SmartCard.init(
         key: 'id'
       }
     },
-    isActive: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true
+    status: {
+      type: DataTypes.ENUM('ACTIVE', 'SUSPENDED'),
+      defaultValue: 'ACTIVE'
+    },
+    telebirrPhone: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    activatedAt: {
+      type: DataTypes.DATE,
+      allowNull: true
     },
     lastUsedAt: {
       type: DataTypes.DATE,

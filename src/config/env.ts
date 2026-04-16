@@ -14,8 +14,16 @@ export const config = {
   },
   telebirr: {
     apiUrl: process.env.TELEBIRR_API_URL || 'https://api.telebirr.et',
-    appId: process.env.TELEBIRR_APP_ID || '',
-    appKey: process.env.TELEBIRR_APP_KEY || ''
+    appId: process.env.TELEBIRR_APP_ID || process.env.Fabric_App_ID || process.env.FABRIC_APP_ID || '',
+    appKey: process.env.TELEBIRR_APP_KEY || '',
+    fabricAppId: process.env.FABRIC_APP_ID || process.env.Fabric_App_ID || process.env.TELEBIRR_APP_ID || '',
+    appSecret: process.env.APP_SECRET || process.env.App_Secret || '',
+    merchantCode: process.env.MERCHANT_CODE || process.env.ShortCode || '',
+    merchantAppId: process.env.MERCHANT_APP_ID || process.env.Merchant_AppID || '',
+    privateKey: process.env.PRIVATE_KEY || process.env.PrivateKey || '',
+    tokenUrl: process.env.TELEBIRR_TOKEN_URL || '',
+    createOrderUrl: process.env.TELEBIRR_CREATE_ORDER_URL || '',
+    checkoutBaseUrl: process.env.TELEBIRR_CHECKOUT_BASE_URL || ''
   },
   cors: {
     origin: (process.env.CORS_ORIGIN || 'http://localhost:3001').split(',')

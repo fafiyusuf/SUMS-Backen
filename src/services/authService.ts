@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import config from '../config/env';
 import sequelize from '../database/connection';
@@ -39,7 +39,7 @@ export class AuthService {
 
       // Hash password
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+      const hashedPassword = bcrypt.hashSync(userData.password, saltRounds);
 
       // Create user
       const user = await User.create({
@@ -56,7 +56,7 @@ export class AuthService {
 
       // Generate smart card
       const cardId = generateCardId();
-      await SmartCard.create({ cardId, userId: user.id, isActive: true }, { transaction });
+      await SmartCard.create({ cardId, userId: user.id, status: 'ACTIVE', activatedAt: new Date() } as any, { transaction });
 
       await transaction.commit();
       logger.info(`Passenger registered: ${user.email}`);
@@ -82,7 +82,7 @@ export class AuthService {
       }
 
       const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(driverData.password, saltRounds);
+      const hashedPassword = bcrypt.hashSync(driverData.password, saltRounds);
 
       const user = await User.create({
         fullName: driverData.fullName,
@@ -122,7 +122,7 @@ export class AuthService {
         throw new Error('User account is not active');
       }
 
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = bcrypt.compareSync(password, user.password);
       if (!isPasswordValid) {
         throw new Error('Invalid credentials');
       }
