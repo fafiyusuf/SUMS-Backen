@@ -84,7 +84,7 @@ const router = express.Router();
  *         description: No bus assigned to this driver
  */
 router.post('/trip/start', verifyToken, (req, res, next) =>
-  tripController.startDriverTrip(req, res, next)
+    tripController.startDriverTrip(req, res, next)
 );
 
 /**
@@ -117,7 +117,7 @@ router.post('/trip/start', verifyToken, (req, res, next) =>
  *         description: No bus assigned to this driver
  */
 router.put('/trip/end', verifyToken, (req, res, next) =>
-  tripController.endDriverTrip(req, res, next)
+    tripController.endDriverTrip(req, res, next)
 );
 
 /**
@@ -150,7 +150,7 @@ router.put('/trip/end', verifyToken, (req, res, next) =>
  *         description: No active trip found for this driver
  */
 router.get('/trip/current', verifyToken, (req, res, next) =>
-  tripController.getCurrentDriverTrip(req, res, next)
+    tripController.getCurrentDriverTrip(req, res, next)
 );
 
 /**
@@ -184,7 +184,7 @@ router.get('/trip/current', verifyToken, (req, res, next) =>
  *         description: No bus assignment found for this driver
  */
 router.get('/route', verifyToken, (req, res, next) =>
-  tripController.getAssignedRoute(req, res, next)
+    tripController.getAssignedRoute(req, res, next)
 );
 
 /**
@@ -216,7 +216,7 @@ router.get('/route', verifyToken, (req, res, next) =>
  *         description: Unauthorized – missing or invalid token
  */
 router.get('/trip/history', verifyToken, (req, res, next) =>
-  tripController.getDriverTripHistory(req, res, next)
+    tripController.getDriverTripHistory(req, res, next)
 );
 
 export default router;

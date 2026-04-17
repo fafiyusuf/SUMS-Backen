@@ -94,7 +94,7 @@ const router = express.Router();
  *         description: Unauthorized – missing or invalid token
  */
 router.get('/', verifyToken, (req, res, next) =>
-  stopController.getAllStops(req, res, next)
+    stopController.getAllStops(req, res, next)
 );
 
 /**
@@ -136,7 +136,7 @@ router.get('/', verifyToken, (req, res, next) =>
  *         description: Stop not found
  */
 router.get('/:id', verifyToken, (req, res, next) =>
-  stopController.getStop(req, res, next)
+    stopController.getStop(req, res, next)
 );
 
 /**
@@ -175,7 +175,7 @@ router.get('/:id', verifyToken, (req, res, next) =>
  *         description: Forbidden – admin role required
  */
 router.post('/', verifyToken, requireRole('admin'), (req, res, next) =>
-  stopController.createStop(req, res, next)
+    stopController.createStop(req, res, next)
 );
 
 /**
@@ -225,7 +225,7 @@ router.post('/', verifyToken, requireRole('admin'), (req, res, next) =>
  *         description: Stop not found
  */
 router.put('/:id', verifyToken, requireRole('admin'), (req, res, next) =>
-  stopController.updateStop(req, res, next)
+    stopController.updateStop(req, res, next)
 );
 
 export default router;
