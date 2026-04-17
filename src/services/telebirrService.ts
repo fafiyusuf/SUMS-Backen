@@ -1,4 +1,5 @@
 import axios from 'axios';
+import https from 'https';
 import crypto from 'crypto';
 import config from '../config/env';
 import logger from '../utils/logger';
@@ -70,6 +71,8 @@ function signPayload(payload: Record<string, unknown>, privateKey: string): stri
 }
 
 export class TelebirrService {
+  private httpsAgent = new https.Agent({ rejectUnauthorized: process.env.TELEBIRR_ALLOW_SELF_SIGNED ? false : true });
+
   async createCheckoutUrl(input: CreateCheckoutInput): Promise<Record<string, unknown>> {
     const telebirr = config.telebirr;
 
@@ -92,9 +95,11 @@ export class TelebirrService {
         {
           headers: {
             'Content-Type': 'application/json',
-            'X-APP-Key': telebirr.fabricAppId
+            'X-APP-Key': telebirr.fabricAppId,
+            Connection: 'keep-alive'
           },
-          timeout: 30000
+          timeout: 30000,
+          httpsAgent: this.httpsAgent
         }
       );
 
@@ -137,16 +142,25 @@ export class TelebirrService {
         sign_type: 'SHA256WithRSA'
       };
 
+      // Prefer TELEBIRR_BASE_URL env var for constructing the SuperApp endpoint.
+      // Fall back to configured createOrderUrl if TELEBIRR_BASE_URL is not set.
+      const baseUrl = process.env.TELEBIRR_BASE_URL || telebirr.createOrderUrl || '';
+      const orderEndpoint = baseUrl.endsWith('/payment/v1/app/checkout')
+        ? baseUrl
+        : `${baseUrl.replace(/\/$/, '')}/payment/v1/app/checkout`;
+
       const orderResponse = await axios.post(
-        telebirr.createOrderUrl,
+        orderEndpoint,
         createOrderBody,
         {
           headers: {
             'Content-Type': 'application/json',
             'X-APP-Key': telebirr.fabricAppId,
-            Authorization: `Bearer ${fabricToken}`
+            Authorization: `Bearer ${fabricToken}`,
+            Connection: 'keep-alive'
           },
-          timeout: 30000
+          timeout: 30000,
+          httpsAgent: this.httpsAgent
         }
       );
 
@@ -169,6 +183,22 @@ export class TelebirrService {
       const checkoutUrl = checkoutUrlFromProvider ||
         (telebirr.checkoutBaseUrl && prepayId ? `${telebirr.checkoutBaseUrl}?prepay_id=${encodeURIComponent(prepayId)}` : undefined);
 
+      // Build the rawRequest payload that the merchant H5 page will forward to
+      // the SuperApp JS to open the checkout. It includes the prepay id, order
+      // identifiers, the previously computed signature, and the biz content.
+      const rawRequest = {
+        prepay_id: prepayId,
+        out_trade_no: outTradeNo,
+        nonce_str: orderPayload.nonce_str,
+        timestamp: orderPayload.timestamp,
+        version: orderPayload.version,
+        sign_type: 'SHA256WithRSA',
+        sign,
+        biz_content: bizContent
+      } as Record<string, unknown>;
+
+      const rawRequestString = JSON.stringify(sortObjectKeys(rawRequest));
+
       if (!checkoutUrl) {
         throw createApiError('Telebirr did not return a checkout URL. Check TELEBIRR_CHECKOUT_BASE_URL or provider response mapping.', 502);
       }
@@ -178,11 +208,19 @@ export class TelebirrService {
         outTradeNo,
         prepayId,
         fabricToken,
-        providerResponse: responseData
+        providerResponse: responseData,
+        rawRequest,
+        rawRequestString
       };
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string; status?: number };
       const providerPayload = axiosError.response?.data ? JSON.stringify(axiosError.response.data) : '';
+      // eslint-disable-next-line no-console
+      console.log('Telebirr checkout error response:', axiosError.response?.data);
+      // eslint-disable-next-line no-console
+      console.log('Telebirr checkout error status:', axiosError.response?.status);
+      // eslint-disable-next-line no-console
+      console.error('Telebirr checkout error:', axiosError.message || String(error));
       logger.error(`Telebirr checkout URL generation failed: ${axiosError.message || String(error)} ${providerPayload}`);
 
       if ((error as ApiError).status) {
