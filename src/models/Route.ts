@@ -13,7 +13,7 @@ export interface RouteAttributes {
   updatedAt?: Date;
 }
 
-export interface RouteCreationAttributes extends Optional<RouteAttributes, 'id'> {}
+export interface RouteCreationAttributes extends Optional<RouteAttributes, 'id'> { }
 
 export class Route extends Model<RouteAttributes, RouteCreationAttributes> implements RouteAttributes {
   public id!: string;

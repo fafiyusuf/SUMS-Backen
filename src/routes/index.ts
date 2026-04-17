@@ -11,7 +11,10 @@ import walletRoutes from './walletRoutes';
 // import busRoutes from './busRoutes';
 // import gpsRoutes from './gpsRoutes';
 // import incidentRoutes from './incidentRoutes';
-// import routeRoutes from './routeRoutes';
+import routeRoutes from './routeRoutes';
+// import stopRoutes from './stopRoutes';
+// import tripRoutes from './tripRoutes';
+// import walletRoutes from './walletRoutes';
 
 const router = express.Router();
 
@@ -26,7 +29,8 @@ router.use('/wallet', walletRoutes);
 router.use('/trips', tripRoutes);
 // router.use('/stops', stopRoutes);
 // router.use('/buses', busRoutes);
-// router.use('/routes', routeRoutes);
+router.use('/routes', routeRoutes);
+// router.use('/stops', stopRoutes);
 // router.use('/gps', gpsRoutes);
 // router.use('/incidents', incidentRoutes);
 
