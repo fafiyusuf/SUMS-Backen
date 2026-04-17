@@ -14,7 +14,7 @@ const app: Express = express();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: config.cors.origin,
+  origin: config.cors.origin.includes('*') ? '*' : config.cors.origin,
   credentials: true
 }));
 app.use(morgan('dev'));

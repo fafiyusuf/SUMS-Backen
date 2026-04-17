@@ -19,10 +19,10 @@ async function startServer() {
     logger.info('Database connection established successfully');
 
     // Sync database (use { alter: true } in development, migrations in production)
-    if (config.env === 'development') {
+   /* if (config.env === 'development') {
       await sequelize.sync({ alter: true });
       logger.info('Database synchronized');
-    }
+    }*/
 
     // Create HTTP server
     const server = http.createServer(app);
@@ -33,7 +33,7 @@ async function startServer() {
     // Start server
     server.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`);
-      logger.info(`Environment: ${config.env}`);
+      //logger.info(`Environment: ${config.env}`);
     });
   } catch (error) {
     logger.error(`Server startup failed: ${error}`);
