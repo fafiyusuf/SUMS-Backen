@@ -2,7 +2,7 @@
 // export { default as Bus, BusAttributes, BusCreationAttributes } from './Bus';
 // export { default as GPSCoordinate, GPSCoordinateAttributes, GPSCoordinateCreationAttributes } from './GPSCoordinate';
 // export { default as Incident, IncidentAttributes, IncidentCreationAttributes } from './Incident';
-// export { default as Route, RouteAttributes, RouteCreationAttributes } from './Route';
+export { default as Route, RouteAttributes, RouteCreationAttributes } from './Route';
 // export { default as Schedule, ScheduleAttributes, ScheduleCreationAttributes } from './Schedule';
 export { default as SmartCard, SmartCardAttributes, SmartCardCreationAttributes } from './SmartCard';
 // export { default as Stop, StopAttributes, StopCreationAttributes } from './Stop';
