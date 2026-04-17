@@ -1,14 +1,14 @@
 // // Models index file - export all models
-// export { default as Bus, BusAttributes, BusCreationAttributes } from './Bus';
+export { default as Bus, BusAttributes, BusCreationAttributes } from './Bus';
 // export { default as GPSCoordinate, GPSCoordinateAttributes, GPSCoordinateCreationAttributes } from './GPSCoordinate';
 // export { default as Incident, IncidentAttributes, IncidentCreationAttributes } from './Incident';
-// export { default as Route, RouteAttributes, RouteCreationAttributes } from './Route';
+export { default as Route, RouteAttributes, RouteCreationAttributes } from './Route';
 // export { default as Schedule, ScheduleAttributes, ScheduleCreationAttributes } from './Schedule';
 export { default as SmartCard, SmartCardAttributes, SmartCardCreationAttributes } from './SmartCard';
-// export { default as Stop, StopAttributes, StopCreationAttributes } from './Stop';
+export { default as Stop, StopAttributes, StopCreationAttributes } from './Stop';
 // export { default as TapEvent, TapEventAttributes, TapEventCreationAttributes } from './TapEvent';
 // export { default as Transaction, TransactionAttributes, TransactionCreationAttributes } from './Transaction';
-// export { default as Trip, TripAttributes, TripCreationAttributes } from './Trip';
+export { default as Trip, TripAttributes, TripCreationAttributes } from './Trip';
 export { default as User, UserAttributes, UserCreationAttributes } from './User';
 export { default as Wallet, WalletAttributes, WalletCreationAttributes } from './Wallet';
 
