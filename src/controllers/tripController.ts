@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { Trip, Bus, Route } from '../models';
+import { Bus, Route, Trip } from '../models';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -182,11 +182,83 @@ export class TripController {
 
   async getDriverTripHistory(_req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Return empty history for now
+      const driverId = _req.user?.userId;
+      if (!driverId) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+
+      const page = parseInt(_req.query.page as string) || 1;
+      const limit = parseInt(_req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
+
+      const bus = await Bus.findOne({ where: { driverId } });
+      if (!bus) {
+        res.status(404).json({ success: false, message: 'No bus assigned to driver.' });
+        return;
+      }
+
+      const trips = await Trip.findAll({
+        where: { busId: bus.id },
+        order: [['startTime', 'DESC']],
+        limit,
+        offset,
+      });
+      const total = await Trip.count({ where: { busId: bus.id } });
+
+      const routeIds = Array.from(new Set(trips.map((trip) => trip.routeId)));
+      const routes = routeIds.length
+        ? await Route.findAll({ where: { id: routeIds } })
+        : [];
+
+      const routeMap = new Map(routes.map((route) => [route.id, route]));
+      const data = trips.map((trip) => {
+        const route = routeMap.get(trip.routeId);
+
+        // Calculate hours driven from trip duration
+        let hoursDriven = 0;
+        if (trip.startTime && trip.endTime) {
+          const start = new Date(trip.startTime).getTime();
+          const end = new Date(trip.endTime).getTime();
+          hoursDriven = Math.round(((end - start) / (1000 * 60 * 60)) * 10) / 10; // Round to 1 decimal
+        }
+
+        return {
+          id: trip.id,
+          busId: trip.busId,
+          routeId: trip.routeId,
+          startTime: trip.startTime,
+          endTime: trip.endTime,
+          status: trip.status,
+          createdAt: trip.createdAt,
+          updatedAt: trip.updatedAt,
+          hoursDriven,
+          bus: {
+            registrationNumber: bus.registrationNumber,
+            capacity: bus.capacity,
+          },
+          route: route
+            ? {
+                id: route.id,
+                name: route.name,
+                startPoint: route.startPoint,
+                endPoint: route.endPoint,
+                distance: route.distance,
+                estimatedDuration: route.estimatedDuration,
+              }
+            : null,
+        };
+      });
+
       res.status(200).json({
         success: true,
         message: 'Driver trip history retrieved',
-        data: [] 
+        data: {
+          trips: data,
+          total,
+          page,
+          limit,
+        },
       });
     } catch (error) {
       next(error);
