@@ -1,7 +1,11 @@
 {
-  "watch": ["src"],
+  "watch": [
+    "src"
+  ],
   "ext": "ts",
-  "ignore": ["src/**/*.test.ts"],
+  "ignore": [
+    "src/**/*.test.ts"
+  ],
   "exec": "ts-node -r tsconfig-paths/register",
   "events": {
     "restart": "clear"
