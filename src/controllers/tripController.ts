@@ -51,6 +51,22 @@ export class TripController {
     }
   }
 
+  async getPassengerHistory(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = req.user?.userId;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
+
+      const trips = await Trip.findAll({ where: { userId }, limit, offset, order: [['createdAt', 'DESC']] });
+      const total = await Trip.count({ where: { userId } });
+
+      res.status(200).json({ success: true, message: 'History retrieved', data: { trips, total, page, limit } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async completeTrip(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
@@ -260,6 +276,21 @@ export class TripController {
           limit,
         },
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getAllTrips(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
+
+      const trips = await Trip.findAll({ limit, offset, order: [['createdAt', 'DESC']] });
+      const total = await Trip.count();
+
+      res.status(200).json({ success: true, message: 'All trips retrieved', data: { trips, total, page, limit } });
     } catch (error) {
       next(error);
     }

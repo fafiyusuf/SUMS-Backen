@@ -1,6 +1,46 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Bus:
+ *       type: object
+ *       required:
+ *         - registrationNumber
+ *         - driverId
+ *         - routeId
+ *         - capacity
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         registrationNumber:
+ *           type: string
+ *           unique: true
+ *         driverId:
+ *           type: string
+ *           format: uuid
+ *         routeId:
+ *           type: string
+ *           format: uuid
+ *         capacity:
+ *           type: integer
+ *         currentPassengers:
+ *           type: integer
+ *           default: 0
+ *         status:
+ *           type: string
+ *           enum: [active, inactive, maintenance]
+ *           default: active
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */
 export interface BusAttributes {
   id: string;
   registrationNumber: string;
@@ -13,7 +53,7 @@ export interface BusAttributes {
   updatedAt?: Date;
 }
 
-export interface BusCreationAttributes extends Optional<BusAttributes, 'id'> {}
+export interface BusCreationAttributes extends Optional<BusAttributes, 'id'> { }
 
 export class Bus extends Model<BusAttributes, BusCreationAttributes> implements BusAttributes {
   public id!: string;
