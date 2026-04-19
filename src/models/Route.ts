@@ -1,6 +1,44 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Route:
+ *       type: object
+ *       required:
+ *         - name
+ *         - startPoint
+ *         - endPoint
+ *         - distance
+ *         - estimatedDuration
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *         startPoint:
+ *           type: string
+ *         endPoint:
+ *           type: string
+ *         distance:
+ *           type: number
+ *           format: float
+ *         estimatedDuration:
+ *           type: integer
+ *           description: Duration in minutes
+ *         status:
+ *           type: string
+ *           enum: [active, inactive]
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */
 export interface RouteAttributes {
   id: string;
   name: string;

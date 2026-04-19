@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import tripController from '../controllers/tripController';
 import verifyToken from '../middleware/authMiddleware';
 
@@ -52,7 +52,7 @@ const router = express.Router();
  *         status:
  *           type: string
  *           example: active
- */
+ * */
 
 /**
  * @swagger
@@ -83,7 +83,7 @@ const router = express.Router();
  *       404:
  *         description: No bus assigned to this driver
  */
-router.post('/trip/start', verifyToken, (req, res, next) =>
+router.post('/trip/start', verifyToken, (req: Request, res: Response, next: NextFunction) =>
     tripController.startDriverTrip(req, res, next)
 );
 
@@ -116,7 +116,7 @@ router.post('/trip/start', verifyToken, (req, res, next) =>
  *       404:
  *         description: No bus assigned to this driver
  */
-router.put('/trip/end', verifyToken, (req, res, next) =>
+router.put('/trip/end', verifyToken, (req: Request, res: Response, next: NextFunction) =>
     tripController.endDriverTrip(req, res, next)
 );
 
@@ -149,7 +149,7 @@ router.put('/trip/end', verifyToken, (req, res, next) =>
  *       404:
  *         description: No active trip found for this driver
  */
-router.get('/trip/current', verifyToken, (req, res, next) =>
+router.get('/trip/current', verifyToken, (req: Request, res: Response, next: NextFunction) =>
     tripController.getCurrentDriverTrip(req, res, next)
 );
 
@@ -183,7 +183,7 @@ router.get('/trip/current', verifyToken, (req, res, next) =>
  *       404:
  *         description: No bus assignment found for this driver
  */
-router.get('/route', verifyToken, (req, res, next) =>
+router.get('/route', verifyToken, (req: Request, res: Response, next: NextFunction) =>
     tripController.getAssignedRoute(req, res, next)
 );
 
@@ -215,7 +215,7 @@ router.get('/route', verifyToken, (req, res, next) =>
  *       401:
  *         description: Unauthorized – missing or invalid token
  */
-router.get('/trip/history', verifyToken, (req, res, next) =>
+router.get('/trip/history', verifyToken, (req: Request, res: Response, next: NextFunction) =>
     tripController.getDriverTripHistory(req, res, next)
 );
 

@@ -1,6 +1,42 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from '../config/database';
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Stop:
+ *       type: object
+ *       required:
+ *         - name
+ *         - routeId
+ *         - latitude
+ *         - longitude
+ *         - sequenceNumber
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *         name:
+ *           type: string
+ *         routeId:
+ *           type: string
+ *           format: uuid
+ *         latitude:
+ *           type: number
+ *           format: float
+ *         longitude:
+ *           type: number
+ *           format: float
+ *         sequenceNumber:
+ *           type: integer
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ */
 export interface StopAttributes {
   id: string;
   name: string;
@@ -12,7 +48,7 @@ export interface StopAttributes {
   updatedAt?: Date;
 }
 
-export interface StopCreationAttributes extends Optional<StopAttributes, 'id'> {}
+export interface StopCreationAttributes extends Optional<StopAttributes, 'id'> { }
 
 export class Stop extends Model<StopAttributes, StopCreationAttributes> implements StopAttributes {
   public id!: string;

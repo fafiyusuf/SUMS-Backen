@@ -1,36 +1,46 @@
-// // Models index file - export all models
-export { default as Bus, BusAttributes, BusCreationAttributes } from './Bus';
-// export { default as GPSCoordinate, GPSCoordinateAttributes, GPSCoordinateCreationAttributes } from './GPSCoordinate';
-// export { default as Incident, IncidentAttributes, IncidentCreationAttributes } from './Incident';
-export { default as Route, RouteAttributes, RouteCreationAttributes } from './Route';
-// export { default as Schedule, ScheduleAttributes, ScheduleCreationAttributes } from './Schedule';
-export { default as SmartCard, SmartCardAttributes, SmartCardCreationAttributes } from './SmartCard';
-export { default as Stop, StopAttributes, StopCreationAttributes } from './Stop';
-// export { default as TapEvent, TapEventAttributes, TapEventCreationAttributes } from './TapEvent';
-export { default as Transaction, TransactionAttributes, TransactionCreationAttributes } from './Transaction';
-export { default as Trip, TripAttributes, TripCreationAttributes } from './Trip';
-export { default as User, UserAttributes, UserCreationAttributes } from './User';
-export { default as Wallet, WalletAttributes, WalletCreationAttributes } from './Wallet';
-
-
+import Bus from './Bus';
+import Route from './Route';
 import SmartCard from './SmartCard';
+import Stop from './Stop';
 import Transaction from './Transaction';
+import Trip from './Trip';
 import User from './User';
 import Wallet from './Wallet';
 
-// Define associations
+// Export all models
+export { Bus, Route, SmartCard, Stop, Transaction, Trip, User, Wallet };
+
+// --- Define associations ---
+
+// User & Wallet (1:1)
 User.hasOne(Wallet, { foreignKey: 'userId', as: 'wallet' });
 Wallet.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// User & SmartCard (1:N)
 User.hasMany(SmartCard, { foreignKey: 'userId', as: 'cards' });
 SmartCard.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// User & Transaction (1:N)
 User.hasMany(Transaction, { foreignKey: 'userId', as: 'transactions' });
 Transaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// Route & Stop (1:N)
+Route.hasMany(Stop, { foreignKey: 'routeId', as: 'stops' });
+Stop.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+
+// Route & Bus (1:N)
+Route.hasMany(Bus, { foreignKey: 'routeId', as: 'buses' });
+Bus.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+
+// Bus & Driver (User) (1:1)
+User.hasOne(Bus, { foreignKey: 'driverId', as: 'assignedBus' });
+Bus.belongsTo(User, { foreignKey: 'driverId', as: 'driver' });
+
+// Trip associations
+Trip.belongsTo(User, { foreignKey: 'userId', as: 'passenger' });
+Trip.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
+Trip.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+Trip.belongsTo(Stop, { foreignKey: 'startStopId', as: 'startStop' });
+Trip.belongsTo(Stop, { foreignKey: 'endStopId', as: 'endStop' });
+
 export { sequelize } from '../config/database';
-
-export * from './SmartCard';
-export * from './User';
-export * from './Wallet';
-

@@ -1,7 +1,12 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import stopController from '../controllers/stopController';
 import verifyToken from '../middleware/authMiddleware';
 import { requireRole } from '../middleware/roleMiddleware';
+import { 
+    validateCreateStop, 
+    validateUUID, 
+    handleValidationErrors 
+} from '../utils/validators';
 
 const router = express.Router();
 
@@ -93,7 +98,7 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized – missing or invalid token
  */
-router.get('/', verifyToken, (req, res, next) =>
+router.get('/', verifyToken, (req: Request, res: Response, next: NextFunction) =>
     stopController.getAllStops(req, res, next)
 );
 
@@ -135,7 +140,7 @@ router.get('/', verifyToken, (req, res, next) =>
  *       404:
  *         description: Stop not found
  */
-router.get('/:id', verifyToken, (req, res, next) =>
+router.get('/:id', verifyToken, validateUUID(), handleValidationErrors, (req: Request, res: Response, next: NextFunction) =>
     stopController.getStop(req, res, next)
 );
 
@@ -174,7 +179,7 @@ router.get('/:id', verifyToken, (req, res, next) =>
  *       403:
  *         description: Forbidden – admin role required
  */
-router.post('/', verifyToken, requireRole('admin'), (req, res, next) =>
+router.post('/', verifyToken, requireRole('admin'), validateCreateStop, handleValidationErrors, (req: Request, res: Response, next: NextFunction) =>
     stopController.createStop(req, res, next)
 );
 
@@ -224,7 +229,7 @@ router.post('/', verifyToken, requireRole('admin'), (req, res, next) =>
  *       404:
  *         description: Stop not found
  */
-router.put('/:id', verifyToken, requireRole('admin'), (req, res, next) =>
+router.put('/:id', verifyToken, requireRole('admin'), validateUUID(), validateCreateStop, handleValidationErrors, (req: Request, res: Response, next: NextFunction) =>
     stopController.updateStop(req, res, next)
 );
 
