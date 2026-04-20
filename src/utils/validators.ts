@@ -73,6 +73,19 @@ export const validateUUID = (paramName: string = 'id') => [
   param(paramName).isUUID().withMessage(`Invalid ${paramName} format`)
 ];
 
+export const validateLinkTelebirr = [
+  body('phone')
+    .notEmpty().withMessage('Phone number is required')
+    .isString().trim()
+    .matches(/^(09\d{8}|2519\d{8}|9\d{8})$/, 'Phone must be Ethiopian format (09xxxxxxxx, 2519xxxxxxxx, or 9xxxxxxx)')
+];
+
+export const validateTopup = [
+  body('amount')
+    .isFloat({ gt: 0 }).withMessage('Amount must be greater than 0')
+    .isNumeric().withMessage('Amount must be a number')
+];
+
 export const handleValidationErrors = (req: Request, res: Response, next: NextFunction): void => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

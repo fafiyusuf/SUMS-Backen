@@ -8,6 +8,7 @@ export interface TransactionAttributes {
 	amount: number;
 	description: string;
 	reference?: string;
+	outTradeNo?: string;
 	status: 'pending' | 'completed' | 'failed';
 	createdAt?: Date;
 	updatedAt?: Date;
@@ -22,6 +23,7 @@ export class Transaction extends Model<TransactionAttributes, TransactionCreatio
 	public amount!: number;
 	public description!: string;
 	public reference?: string;
+	public outTradeNo?: string;
 	public status!: 'pending' | 'completed' | 'failed';
 
 	public readonly createdAt!: Date;
@@ -58,6 +60,11 @@ Transaction.init(
 		reference: {
 			type: DataTypes.STRING,
 			allowNull: true
+		},
+		outTradeNo: {
+			type: DataTypes.STRING,
+			allowNull: true,
+			field: 'out_trade_no'
 		},
 		status: {
 			type: DataTypes.ENUM('pending', 'completed', 'failed'),

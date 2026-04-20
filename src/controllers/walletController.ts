@@ -1,6 +1,9 @@
-import { NextFunction, Response } from 'express';
+import { NextFunction, Response, Request } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
 import walletService from '../services/walletService';
+import telebirrService from '../services/walletTelebirrService';
+import logger from '../utils/logger';
+import crypto from 'crypto';
 
 class WalletController {
 	async getWallet(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
@@ -35,30 +38,59 @@ class WalletController {
 				return;
 			}
 
-			const wallet = await walletService.addBalance(userId, amount);
+			// Initiate Telebirr checkout to top up wallet (creates pending transaction)
+			const user = req.user;
+			const result = await telebirrService.createWalletTopup(userId as string, amount, (user as any).phone || '');
 
-			res.status(200).json({ success: true, message: 'Top-up initiated', data: wallet });
+			res.status(200).json({ success: true, message: 'Top-up initiated', data: result });
 		} catch (error) {
+			logger.error(`Wallet topup error: ${error}`);
 			next(error);
 		}
 	}
 
-	// Telebirr webhook receiver (public) - called by Telebirr system
-	async telebirrWebhook(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+	// Telebirr webhook receiver (public) - verifies signature and forwards to telebirrService
+	async telebirrWebhook(req: Request, res: Response): Promise<void> {
 		try {
-			// For now, just acknowledge and record a transaction if provided
 			const payload = req.body as any;
 
-			// Expected fields may include: out_trade_no, prepay_id, total_amount, status, buyer_id, reference
-			if (payload && payload.out_trade_no && payload.total_amount) {
-				// Try to map to a user via stored mapping (not implemented) - best-effort
-				// We'll store a pending transaction record if userId provided
-				const userId = payload.userId || payload.buyer_id || null;
-				await walletService.addBalance(userId as any, parseFloat(payload.total_amount) || 0);
+			// Verify signature if secret configured
+			const webhookSecret = process.env.TELEBIRR_WEBHOOK_SECRET;
+			if (webhookSecret) {
+				const signature = (req.headers['x-telebirr-signature'] as string) || '';
+				const expected = crypto.createHmac('sha256', webhookSecret).update(JSON.stringify(payload)).digest('hex');
+				if (!signature || signature !== expected) {
+					res.status(401).json({ success: false, message: 'Invalid webhook signature' });
+					return;
+				}
 			}
 
-			res.status(200).json({ success: true, message: 'Webhook received' });
-		} catch (error) {
+			if (!payload.outTradeNo || !payload.status) {
+				res.status(400).json({ success: false, message: 'Invalid webhook payload' });
+				return;
+			}
+
+			await telebirrService.processWebhook({ outTradeNo: payload.outTradeNo, status: payload.status, amount: parseFloat(payload.amount || payload.total_amount || 0) });
+
+			res.status(200).send('OK');
+		} catch (error: any) {
+			logger.error(`Wallet Telebirr webhook error: ${error.message}`);
+			res.status(500).json({ success: false, message: 'Webhook processing failed' });
+		}
+	}
+
+	// Verify transaction status (Telebirr)
+	async telebirrVerify(req: Request, res: Response, next: NextFunction): Promise<void> {
+		try {
+			const { tradeNo } = req.query;
+			if (!tradeNo) {
+				res.status(400).json({ success: false, message: 'Transaction number is required' });
+				return;
+			}
+
+			const result = await telebirrService.verifyTransaction(tradeNo as string);
+			res.status(200).json(result);
+		} catch (error: any) {
 			next(error);
 		}
 	}

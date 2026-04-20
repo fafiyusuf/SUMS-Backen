@@ -3,6 +3,8 @@ import https from 'https';
 import crypto from 'crypto';
 import config from '../config/env';
 import logger from '../utils/logger';
+import { Transaction } from '../models';
+import walletService from './walletService';
 
 export interface CreateCheckoutInput {
   amount: number;
@@ -70,8 +72,18 @@ function signPayload(payload: Record<string, unknown>, privateKey: string): stri
   return sign.sign(privateKey, 'base64');
 }
 
-export class TelebirrService {
+export interface TelebirrWebhookPayload {
+  outTradeNo: string;
+  status: string;
+  amount: number;
+}
+
+export class WalletTelebirrService {
   private httpsAgent = new https.Agent({ rejectUnauthorized: process.env.TELEBIRR_ALLOW_SELF_SIGNED ? false : true });
+
+  private generateTradeNo(): string {
+    return `TB_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
 
   async createCheckoutUrl(input: CreateCheckoutInput): Promise<Record<string, unknown>> {
     const telebirr = config.telebirr;
@@ -142,8 +154,6 @@ export class TelebirrService {
         sign_type: 'SHA256WithRSA'
       };
 
-      // Prefer TELEBIRR_BASE_URL env var for constructing the SuperApp endpoint.
-      // Fall back to configured createOrderUrl if TELEBIRR_BASE_URL is not set.
       const baseUrl = process.env.TELEBIRR_BASE_URL || telebirr.createOrderUrl || '';
       const orderEndpoint = baseUrl.endsWith('/payment/v1/app/checkout')
         ? baseUrl
@@ -164,9 +174,6 @@ export class TelebirrService {
         }
       );
 
-      // Log the full provider response to surface Telebirr error codes (e.g. 60200099)
-      // This helps debugging signature failures or other provider-side errors.
-      // eslint-disable-next-line no-console
       console.log('Telebirr provider response:', orderResponse.data);
 
       const responseData = orderResponse.data as Record<string, unknown>;
@@ -183,9 +190,6 @@ export class TelebirrService {
       const checkoutUrl = checkoutUrlFromProvider ||
         (telebirr.checkoutBaseUrl && prepayId ? `${telebirr.checkoutBaseUrl}?prepay_id=${encodeURIComponent(prepayId)}` : undefined);
 
-      // Build the rawRequest payload that the merchant H5 page will forward to
-      // the SuperApp JS to open the checkout. It includes the prepay id, order
-      // identifiers, the previously computed signature, and the biz content.
       const rawRequest = {
         prepay_id: prepayId,
         out_trade_no: outTradeNo,
@@ -215,11 +219,8 @@ export class TelebirrService {
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string; status?: number };
       const providerPayload = axiosError.response?.data ? JSON.stringify(axiosError.response.data) : '';
-      // eslint-disable-next-line no-console
       console.log('Telebirr checkout error response:', axiosError.response?.data);
-      // eslint-disable-next-line no-console
       console.log('Telebirr checkout error status:', axiosError.response?.status);
-      // eslint-disable-next-line no-console
       console.error('Telebirr checkout error:', axiosError.message || String(error));
       logger.error(`Telebirr checkout URL generation failed: ${axiosError.message || String(error)} ${providerPayload}`);
 
@@ -230,6 +231,101 @@ export class TelebirrService {
       throw createApiError('Failed to create Telebirr checkout URL.', axiosError.response?.status || 500);
     }
   }
+
+  async createWalletTopup(userId: string, amount: number, userPhone: string): Promise<Record<string, unknown>> {
+    try {
+      const outTradeNo = this.generateTradeNo();
+
+      await Transaction.create({
+        userId,
+        amount,
+        status: 'pending',
+        outTradeNo,
+        type: 'credit',
+        description: 'Telebirr Wallet Topup'
+      } as any);
+
+      const paymentRequest = {
+        amount,
+        subject: 'Wallet Topup',
+        outTradeNo,
+        notifyUrl: process.env.TELEBIRR_NOTIFY_URL || 'http://localhost:5001/api/telebirr/webhook',
+        redirectUrl: `${process.env.TELEBIRR_RETURN_URL || 'http://localhost:3000/payment/success'}?tradeNo=${outTradeNo}`,
+        customer_phone: userPhone
+      };
+
+      const response = await this.createCheckoutUrl(paymentRequest);
+
+      return {
+        success: true,
+        checkoutUrl: response.checkoutUrl,
+        outTradeNo
+      };
+    } catch (error: any) {
+      logger.error(`Create wallet topup error: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async processWebhook(payload: TelebirrWebhookPayload): Promise<void> {
+    try {
+      const { outTradeNo, status, amount } = payload;
+
+      const transaction = await Transaction.findOne({ 
+        where: { outTradeNo } 
+      });
+
+      if (!transaction) {
+        logger.warn(`Transaction not found for outTradeNo: ${outTradeNo}`);
+        return;
+      }
+
+      if (transaction.get('status') !== 'pending') {
+        logger.info(`Transaction ${outTradeNo} already processed`);
+        return;
+      }
+
+      if (status === 'SUCCESS') {
+        await transaction.update({ status: 'completed' });
+
+        await walletService.addBalance(transaction.get('userId'), amount);
+
+        logger.info(`Payment successful for transaction ${outTradeNo}, amount: ${amount}`);
+      } else {
+        await transaction.update({ status: 'failed' });
+        logger.info(`Payment failed for transaction ${outTradeNo}, status: ${status}`);
+      }
+    } catch (error: any) {
+      logger.error(`Process webhook error: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async verifyTransaction(outTradeNo: string): Promise<any> {
+    try {
+      const transaction = await Transaction.findOne({ 
+        where: { outTradeNo } 
+      });
+
+      if (!transaction) {
+        throw new Error('Transaction not found');
+      }
+
+      return {
+        success: true,
+        transaction: {
+          id: transaction.get('id'),
+          amount: transaction.get('amount'),
+          status: transaction.get('status'),
+          outTradeNo: transaction.get('outTradeNo'),
+          createdAt: transaction.get('createdAt')
+        }
+      };
+    } catch (error: any) {
+      logger.error(`Verify transaction error: ${error.message}`);
+      throw error;
+    }
+  }
 }
 
-export default new TelebirrService();
+export default new WalletTelebirrService();

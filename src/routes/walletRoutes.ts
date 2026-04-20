@@ -112,8 +112,10 @@ router.get('/transactions', verifyToken, requireRole('passenger'), (req, res, ne
  *       '200':
  *         description: Webhook received
  */
-router.post('/telebirr/webhook', (req, res, next) => walletController.telebirrWebhook(req as any, res as any, next as any));
+router.post('/telebirr/webhook', (req, res) => walletController.telebirrWebhook(req as any, res as any));
 
+// Telebirr verify endpoint
+router.get('/telebirr/verify', verifyToken, (req, res, next) => walletController.telebirrVerify(req as any, res as any, next as any));
 // Internal system endpoint for fare deduction (no role required but could be protected by internal network)
 /**
  * @openapi

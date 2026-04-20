@@ -49,6 +49,7 @@ User.init(
       unique: true,
       allowNull: true
     },
+    // telebirrPhone removed; use `phone` field for Telebirr interactions
     password: {
       type: DataTypes.STRING,
       allowNull: false

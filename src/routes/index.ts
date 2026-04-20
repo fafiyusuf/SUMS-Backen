@@ -2,16 +2,15 @@ import express from 'express';
 import authRoutes from './authRoutes';
 import userRoutes from './userRoutes';
 import cardRoutes from './cardRoutes';
-import telebirrRoutes from './telebirrRoutes';
 import telebirrH5Routes from './telebirrH5Routes';
 import walletRoutes from './walletRoutes';
+import paymentRoutes from './paymentRoutes';
 // import busRoutes from './busRoutes';
 // import gpsRoutes from './gpsRoutes';
 // import incidentRoutes from './incidentRoutes';
 // import routeRoutes from './routeRoutes';
 // import stopRoutes from './stopRoutes';
 // import tripRoutes from './tripRoutes';
-// import walletRoutes from './walletRoutes';
 
 const router = express.Router();
 
@@ -19,9 +18,9 @@ const router = express.Router();
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/cards', cardRoutes);
-router.use('/telebirr', telebirrRoutes);
 router.use('/telebirr/h5', telebirrH5Routes);
 router.use('/wallet', walletRoutes);
+router.use('/payment', paymentRoutes);
 // router.use('/wallet', walletRoutes);
 // router.use('/trips', tripRoutes);
 // router.use('/buses', busRoutes);

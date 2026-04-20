@@ -51,7 +51,7 @@ SUMS-Backend/
 │   ├── services/                        # Services (Business Logic)
 │   │   ├── authService.ts               # Authentication logic
 │   │   ├── walletService.ts             # Wallet operations
-│   │   ├── telebirrService.ts           # Payment integration
+│   │   ├── walletTelebirrService.ts     # Payment integration (wallet-scoped)
 │   │   ├── fareService.ts               # Fare calculation
 │   │   ├── etaService.ts                # ETA calculation
 │   │   ├── notificationService.ts       # Notifications
