@@ -1,10 +1,10 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import config from '../config/env';
-import sequelize from '../database/connection';
-import { SmartCard, User, Wallet } from '../models';
-import { generateCardId } from '../utils/helpers';
-import logger from '../utils/logger';
+import config from '@/config/env';
+import sequelize from '@/database/connection';
+import { SmartCard, User, Wallet } from '@/models';
+import { generateCardId } from '@/utils/helpers';
+import logger from '@/utils/logger';
 
 export interface RegisterUserData {
   fullName: string;

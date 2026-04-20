@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { AuthRequest } from '../middleware/authMiddleware';
-import authService from '../services/authService';
+import { AuthRequest } from '@/middleware/authMiddleware';
+import authService from './auth.service';
 
 export class AuthController {
   async register(req: Request, res: Response, next: NextFunction): Promise<void> {
