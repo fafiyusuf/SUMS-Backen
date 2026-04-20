@@ -1,23 +1,18 @@
-import SmartCard from '../models/SmartCard';
-import User from '../models/User';
+import { SmartCard, User } from '@/models';
 
 class CardService {
   async activateCard(cardId: string, userId: string) {
-    // ensure user doesn't already have a card
     const existingUserCard = await SmartCard.findOne({ where: { userId } });
     if (existingUserCard) {
       throw { status: 400, message: 'User already has a linked card' };
     }
 
-    // find existing card
     let card = await SmartCard.findOne({ where: { cardId } });
 
     if (card) {
-      // if linked to different user, error
       if (card.userId && card.userId !== userId) {
         throw { status: 409, message: 'Card already linked to another user' };
       }
-      // link to user and set active
       card.userId = userId;
       card.status = 'ACTIVE';
       card.activatedAt = new Date();
@@ -25,7 +20,6 @@ class CardService {
       return card;
     }
 
-    // create a new card record
     card = await SmartCard.create({ cardId, userId, status: 'ACTIVE', activatedAt: new Date() } as any);
     return card;
   }
