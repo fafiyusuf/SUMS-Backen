@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import telebirrService from '../services/telebirrService';
+import telebirrService from './telebirr.service';
 
-class TelebirrController {
+export class TelebirrController {
   async createCheckoutUrl(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { amount, subject, outTradeNo, timeoutExpress, notifyUrl, redirectUrl } = req.body as {

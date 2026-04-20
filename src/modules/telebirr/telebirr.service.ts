@@ -1,8 +1,8 @@
 import axios from 'axios';
 import https from 'https';
 import crypto from 'crypto';
-import config from '../config/env';
-import logger from '../utils/logger';
+import config from '@/config/env';
+import logger from '@/utils/logger';
 
 export interface CreateCheckoutInput {
   amount: number;
@@ -48,15 +48,12 @@ function sortObjectKeys(value: unknown): unknown {
 function normalizePrivateKey(rawPrivateKey: string): string {
   if (!rawPrivateKey) return '';
 
-  // Trim and convert escaped newlines to real newlines
   let key = rawPrivateKey.trim().replace(/\\n/g, '\n');
 
-  // If it already looks like a PEM (any PRIVATE KEY header), return as-is
   if (/-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(key) && /-----END [A-Z ]*PRIVATE KEY-----/.test(key)) {
     return key;
   }
 
-  // Otherwise normalize: remove any non-base64 chars and re-wrap at 64 chars
   const body = key.replace(/-----.*PRIVATE KEY-----/g, '').replace(/\s+/g, '');
   const lines = body.match(/.{1,64}/g) || [];
   return `-----BEGIN PRIVATE KEY-----\n${lines.join('\n')}\n-----END PRIVATE KEY-----`;
@@ -142,8 +139,6 @@ export class TelebirrService {
         sign_type: 'SHA256WithRSA'
       };
 
-      // Prefer TELEBIRR_BASE_URL env var for constructing the SuperApp endpoint.
-      // Fall back to configured createOrderUrl if TELEBIRR_BASE_URL is not set.
       const baseUrl = process.env.TELEBIRR_BASE_URL || telebirr.createOrderUrl || '';
       const orderEndpoint = baseUrl.endsWith('/payment/v1/app/checkout')
         ? baseUrl
@@ -164,9 +159,6 @@ export class TelebirrService {
         }
       );
 
-      // Log the full provider response to surface Telebirr error codes (e.g. 60200099)
-      // This helps debugging signature failures or other provider-side errors.
-      // eslint-disable-next-line no-console
       console.log('Telebirr provider response:', orderResponse.data);
 
       const responseData = orderResponse.data as Record<string, unknown>;
@@ -183,9 +175,6 @@ export class TelebirrService {
       const checkoutUrl = checkoutUrlFromProvider ||
         (telebirr.checkoutBaseUrl && prepayId ? `${telebirr.checkoutBaseUrl}?prepay_id=${encodeURIComponent(prepayId)}` : undefined);
 
-      // Build the rawRequest payload that the merchant H5 page will forward to
-      // the SuperApp JS to open the checkout. It includes the prepay id, order
-      // identifiers, the previously computed signature, and the biz content.
       const rawRequest = {
         prepay_id: prepayId,
         out_trade_no: outTradeNo,
@@ -215,11 +204,8 @@ export class TelebirrService {
     } catch (error: unknown) {
       const axiosError = error as { response?: { data?: unknown; status?: number }; message?: string; status?: number };
       const providerPayload = axiosError.response?.data ? JSON.stringify(axiosError.response.data) : '';
-      // eslint-disable-next-line no-console
       console.log('Telebirr checkout error response:', axiosError.response?.data);
-      // eslint-disable-next-line no-console
       console.log('Telebirr checkout error status:', axiosError.response?.status);
-      // eslint-disable-next-line no-console
       console.error('Telebirr checkout error:', axiosError.message || String(error));
       logger.error(`Telebirr checkout URL generation failed: ${axiosError.message || String(error)} ${providerPayload}`);
 
