@@ -1,8 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
 import https from 'https';
 import crypto from 'crypto';
-import config from '../config/env';
-import logger from '../utils/logger';
+import config from '@/config/env';
+import logger from '@/utils/logger';
 
 export interface PreOrderInput {
   amount: number;
@@ -53,13 +53,11 @@ async function requestWithRetry<T = unknown>(fn: () => Promise<AxiosResponse<T>>
       const isTransient = status === 502 || status === 504 || code === 'ECONNRESET' || code === 'ECONNABORTED' || code === 'ETIMEDOUT';
       attempt += 1;
       if (attempt >= retries || !isTransient) throw err;
-      // exponential backoff
       await new Promise((r) => setTimeout(r, delayMs * Math.pow(2, attempt - 1)));
     }
   }
 }
 
-// Shared HTTPS agent for keep-alive and TLS options. In dev you may set TELEBIRR_ALLOW_SELF_SIGNED=true
 const httpsAgent = new https.Agent({ keepAlive: true, rejectUnauthorized: process.env.TELEBIRR_ALLOW_SELF_SIGNED ? false : true, maxSockets: 10 });
 
 const DEFAULT_TIMEOUT = 30000;
@@ -73,7 +71,6 @@ export class TelebirrH5Service {
   private telebirr = config.telebirr;
 
   private getBaseUrl(): string {
-    // TELEBIRR_BASE_URL is preferred for runtime control (https://app.developerportal.ethiotelebirr.et:38443/ or https://api.telebirr.et)
     return (process.env.TELEBIRR_BASE_URL || this.telebirr.apiUrl || '').replace(/\/$/, '');
   }
 
@@ -119,11 +116,9 @@ export class TelebirrH5Service {
       }
     };
 
-    // remove undefined fields
     const biz = payload.biz_content as Record<string, unknown>;
     Object.keys(biz).forEach((k) => (biz[k] === undefined ? delete biz[k] : undefined));
 
-    // sign only if privateKey is configured; some environments require unsigned server request
     const privateKey = normalizePrivateKey(this.telebirr.privateKey || '');
     let bodyPayload: Record<string, unknown> = { ...payload };
     let sign: string | undefined;
@@ -139,7 +134,6 @@ export class TelebirrH5Service {
 
     const responseData = resp.data as Record<string, unknown>;
 
-    // Build rawRequest for H5 to call SuperApp JS
     const prepayId = (responseData.prepay_id as string) || ((responseData.biz_content as any)?.prepay_id as string);
     const rawRequest: Record<string, unknown> = {
       prepay_id: prepayId,
@@ -192,10 +186,9 @@ export class TelebirrH5Service {
     return { providerResponse: resp.data };
   }
 
-  // Verify incoming notify payload using TELEBIRR_PUBLIC_KEY if provided
   verifyNotify(payload: Record<string, unknown>, signatureBase64?: string): boolean {
     const pub = process.env.TELEBIRR_PUBLIC_KEY || '';
-    if (!pub || !signatureBase64) return true; // can't verify, allow for flexibility
+    if (!pub || !signatureBase64) return true; 
     const verifier = crypto.createVerify('RSA-SHA256');
     verifier.update(JSON.stringify(sortObjectKeys(payload)));
     verifier.end();
@@ -207,7 +200,6 @@ export class TelebirrH5Service {
     }
   }
 
-  // Combined flow: fabric -> auth -> preOrder -> return rawRequest (for H5)
   async createCheckoutUrl(params: { totalAmount: string; notifyUrl: string; returnUrl?: string; subject?: string; outTradeNo?: string; shortCode?: string }) {
     const fabric = await this.getFabricToken();
     const auth = await this.getAuthToken(fabric);

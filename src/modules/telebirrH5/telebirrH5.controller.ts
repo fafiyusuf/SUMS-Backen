@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import telebirrH5Service from '../services/telebirrH5Service';
+import telebirrH5Service from './telebirrH5.service';
 
 class TelebirrH5Controller {
-  async token(_req: Request, res: Response, next: NextFunction) {
+  async token(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const token = await telebirrH5Service.getFabricToken();
       res.json({ success: true, token });
@@ -11,7 +11,7 @@ class TelebirrH5Controller {
     }
   }
 
-  async authToken(_req: Request, res: Response, next: NextFunction) {
+  async authToken(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const fabric = await telebirrH5Service.getFabricToken();
       const auth = await telebirrH5Service.getAuthToken(fabric);
@@ -21,7 +21,7 @@ class TelebirrH5Controller {
     }
   }
 
-  async preOrder(req: Request, res: Response, next: NextFunction) {
+  async preOrder(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { amount, subject, outTradeNo, notifyUrl, redirectUrl } = req.body;
       const fabric = await telebirrH5Service.getFabricToken();
@@ -33,7 +33,7 @@ class TelebirrH5Controller {
     }
   }
 
-  async refund(req: Request, res: Response, next: NextFunction) {
+  async refund(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { outTradeNo, refundAmount, reason } = req.body;
       const r = await telebirrH5Service.refundOrder(outTradeNo, refundAmount, reason);
@@ -43,9 +43,7 @@ class TelebirrH5Controller {
     }
   }
 
-  // Notification endpoint that the SuperApp will call asynchronously
-  async notify(req: Request, res: Response) {
-    // signature may be in header or body depending on provider
+  async notify(req: Request, res: Response): Promise<void> {
     const signature = (req.headers['x-telebirr-signature'] as string) || (req.body && (req.body.sign as string));
     const verified = telebirrH5Service.verifyNotify(req.body, signature);
     if (!verified) {
@@ -53,7 +51,6 @@ class TelebirrH5Controller {
       return;
     }
 
-    // Process notification: update order status, etc. For now just log and ack
     console.log('Telebirr notify received', req.body);
     res.json({ success: true });
   }
