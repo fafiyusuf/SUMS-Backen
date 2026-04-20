@@ -6,9 +6,11 @@ import Transaction from './Transaction';
 import Trip from './Trip';
 import User from './User';
 import Wallet from './Wallet';
+import Incident from './Incident';
+import GPSCoordinate from './GPSCoordinate';
 
 // Export all models
-export { Bus, Route, SmartCard, Stop, Transaction, Trip, User, Wallet };
+export { Bus, Route, SmartCard, Stop, Transaction, Trip, User, Wallet, Incident, GPSCoordinate };
 
 // --- Define associations ---
 
