@@ -1,5 +1,11 @@
-import { Wallet, Transaction } from '../models';
+import { Op } from 'sequelize';
+import { Transaction, Wallet } from '../models';
 import logger from '../utils/logger';
+
+export interface AddBalanceOptions {
+	logTransaction?: boolean;
+	description?: string;
+}
 
 export class WalletService {
 	async getWallet(userId: string): Promise<any> {
@@ -15,7 +21,7 @@ export class WalletService {
 		}
 	}
 
-	async addBalance(userId: string, amount: number): Promise<any> {
+	async addBalance(userId: string, amount: number, options: AddBalanceOptions = {}): Promise<any> {
 		try {
 			const wallet = await Wallet.findOne({ where: { userId } });
 			if (!wallet) {
@@ -25,14 +31,16 @@ export class WalletService {
 			const newBalance = parseFloat((wallet as any).balance.toString()) + amount;
 			await wallet.update({ balance: newBalance });
 
-			// Log transaction
-			await Transaction.create({
-				userId,
-				type: 'credit',
-				amount,
-				description: 'Balance added',
-				status: 'completed'
-			} as any);
+			const shouldLogTransaction = options.logTransaction !== false;
+			if (shouldLogTransaction) {
+				await Transaction.create({
+					userId,
+					type: 'credit',
+					amount,
+					description: options.description || 'Balance added',
+					status: 'completed'
+				} as any);
+			}
 
 			logger.info(`Balance added for user ${userId}: ${amount}`);
 			return wallet;
@@ -119,8 +127,8 @@ export class WalletService {
 			const where: any = { type: 'debit', status: 'completed' };
 			if (startDate || endDate) {
 				where.createdAt = {} as any;
-				if (startDate) where.createdAt.$gte = new Date(startDate);
-				if (endDate) where.createdAt.$lte = new Date(endDate);
+				if (startDate) where.createdAt[Op.gte] = new Date(startDate);
+				if (endDate) where.createdAt[Op.lte] = new Date(endDate);
 			}
 
 			// Use raw query for sum to keep it simple

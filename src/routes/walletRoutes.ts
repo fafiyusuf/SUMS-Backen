@@ -141,7 +141,7 @@ router.get('/telebirr/verify', verifyToken, (req, res, next) => walletController
  *       '200':
  *         description: Deduction successful
  */
-router.post('/deduct', (req, res, next) => walletController.deduct(req as any, res as any, next as any));
+router.post('/deduct', verifyToken, (req, res, next) => walletController.deduct(req as any, res as any, next as any));
 
 // Admin endpoints
 /**

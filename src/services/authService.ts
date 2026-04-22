@@ -9,7 +9,7 @@ import logger from '../utils/logger';
 export interface RegisterUserData {
   fullName: string;
   email: string;
-  phone?: string;
+  phone: string;
   password: string;
 }
 
@@ -21,6 +21,7 @@ export interface LoginResponse {
   token: string;
   user: {
     id: string;
+    phone: string;
     email: string;
     fullName: string;
     role: string;
@@ -35,6 +36,11 @@ export class AuthService {
       const existingUser = await User.findOne({ where: { email: userData.email } });
       if (existingUser) {
         throw new Error('User already exists');
+      }
+
+      const existingPhone = await User.findOne({ where: { phone: userData.phone } });
+      if (existingPhone) {
+        throw new Error('Phone number already in use');
       }
 
       // Hash password
@@ -59,11 +65,12 @@ export class AuthService {
       await SmartCard.create({ cardId, userId: user.id, status: 'ACTIVE', activatedAt: new Date() } as any, { transaction });
 
       await transaction.commit();
-      logger.info(`Passenger registered: ${user.email}`);
+      logger.info(`Passenger registered: ${user.phone}`);
 
       return {
         userId: user.id,
         email: user.email,
+        phone: user.phone ?? userData.phone,
         fullName: user.fullName,
         cardId
       };
@@ -81,6 +88,11 @@ export class AuthService {
         throw new Error('User already exists');
       }
 
+      const existingPhone = await User.findOne({ where: { phone: driverData.phone } });
+      if (existingPhone) {
+        throw new Error('Phone number already in use');
+      }
+
       const saltRounds = 10;
       const hashedPassword = bcrypt.hashSync(driverData.password, saltRounds);
 
@@ -93,11 +105,12 @@ export class AuthService {
         status: 'active'
       });
 
-      logger.info(`Driver created: ${user.email}`);
+      logger.info(`Driver created: ${user.phone}`);
 
       return {
         userId: user.id,
         email: user.email,
+        phone: user.phone ?? driverData.phone,
         fullName: user.fullName
       };
     } catch (error) {
@@ -106,11 +119,15 @@ export class AuthService {
     }
   }
 
-  async loginUser(email: string, password: string, requiredRole: string): Promise<LoginResponse> {
+  async loginUser(phone: string, password: string, requiredRole: string): Promise<LoginResponse> {
     try {
-      const user = await User.findOne({ where: { email } });
+      const user = await User.findOne({ where: { phone } });
       if (!user) {
         throw new Error('Invalid credentials');
+      }
+
+      if (!user.phone) {
+        throw new Error('User phone number is missing');
       }
 
       if (user.role !== requiredRole) {
@@ -128,17 +145,18 @@ export class AuthService {
       }
 
       const token = jwt.sign(
-        { userId: user.id, role: user.role },
+        { userId: user.id, role: user.role, phone: user.phone || null },
         config.jwt.secret,
         { expiresIn: config.jwt.expiresIn as any }
       );
 
-      logger.info(`User logged in: ${user.email} as ${user.role}`);
+      logger.info(`User logged in: ${user.phone} as ${user.role}`);
 
       return {
         token,
         user: {
           id: user.id,
+          phone: user.phone,
           email: user.email,
           fullName: user.fullName,
           role: user.role

@@ -48,8 +48,8 @@ export class AuthController {
 
   async loginPassenger(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { email, password } = req.body;
-      const result = await authService.loginUser(email, password, 'passenger');
+      const { phone, password } = req.body;
+      const result = await authService.loginUser(phone, password, 'passenger');
       res.status(200).json({ success: true, message: 'Login successful', data: result });
     } catch (error) {
       next(error);
@@ -58,8 +58,8 @@ export class AuthController {
 
   async loginDriver(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { email, password } = req.body;
-      const result = await authService.loginUser(email, password, 'driver');
+      const { phone, password } = req.body;
+      const result = await authService.loginUser(phone, password, 'driver');
       res.status(200).json({ success: true, message: 'Login successful', data: result });
     } catch (error) {
       next(error);
@@ -68,8 +68,8 @@ export class AuthController {
 
   async loginAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { email, password } = req.body;
-      const result = await authService.loginUser(email, password, 'admin');
+      const { phone, password } = req.body;
+      const result = await authService.loginUser(phone, password, 'admin');
       res.status(200).json({ success: true, message: 'Login successful', data: result });
     } catch (error) {
       next(error);

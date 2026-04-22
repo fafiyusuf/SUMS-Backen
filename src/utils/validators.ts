@@ -1,5 +1,5 @@
+import { NextFunction, Request, Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
-import { Request, Response, NextFunction } from 'express';
 
 export const validateRegister = [
   body('email')
@@ -12,7 +12,7 @@ export const validateRegister = [
     .notEmpty().withMessage('Full name is required')
     .trim().escape(),
   body('phone')
-    .optional({ checkFalsy: true })
+    .notEmpty().withMessage('Phone number is required')
     .isMobilePhone('any').withMessage('Please provide a valid phone number')
 ];
 
@@ -24,9 +24,9 @@ export const validateCreateDriver = [
 ];
 
 export const validateLogin = [
-  body('email')
-    .isEmail().withMessage('Please provide a valid email address')
-    .normalizeEmail(),
+  body('phone')
+    .notEmpty().withMessage('Phone number is required')
+    .isMobilePhone('any').withMessage('Please provide a valid phone number'),
   body('password')
     .notEmpty().withMessage('Password is required')
     .escape()

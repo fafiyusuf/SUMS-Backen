@@ -34,6 +34,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true
       },
+      out_trade_no: {
+        type: Sequelize.STRING,
+        allowNull: true
+      },
       status: {
         type: Sequelize.ENUM('pending', 'completed', 'failed'),
         defaultValue: 'pending'

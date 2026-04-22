@@ -39,8 +39,8 @@ class WalletController {
 			}
 
 			// Initiate Telebirr checkout to top up wallet (creates pending transaction)
-			const user = req.user;
-			const result = await telebirrService.createWalletTopup(userId as string, amount, (user as any).phone || '');
+			const userPhone = (req as any).user?.phone || '';
+			const result = await telebirrService.createWalletTopup(userId as string, amount, userPhone);
 
 			res.status(200).json({ success: true, message: 'Top-up initiated', data: result });
 		} catch (error) {
@@ -58,7 +58,8 @@ class WalletController {
 			const webhookSecret = process.env.TELEBIRR_WEBHOOK_SECRET;
 			if (webhookSecret) {
 				const signature = (req.headers['x-telebirr-signature'] as string) || '';
-				const expected = crypto.createHmac('sha256', webhookSecret).update(JSON.stringify(payload)).digest('hex');
+				const rawBody = (req as any).rawBody ? (req as any).rawBody.toString('utf8') : JSON.stringify(payload);
+				const expected = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
 				if (!signature || signature !== expected) {
 					res.status(401).json({ success: false, message: 'Invalid webhook signature' });
 					return;

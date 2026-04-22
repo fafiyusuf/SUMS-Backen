@@ -3,7 +3,7 @@ import authController from '../controllers/authController';
 import verifyToken from '../middleware/authMiddleware';
 import { authLimiter } from '../middleware/rateLimiter';
 import requireRole from '../middleware/roleMiddleware';
-import { handleValidationErrors, validateLogin, validateRegister, validateCreateDriver } from '../utils/validators';
+import { handleValidationErrors, validateCreateDriver, validateLogin, validateRegister } from '../utils/validators';
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ const router = express.Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [fullName, email, password]
+ *             required: [fullName, email, phone, password]
  *             properties:
  *               fullName:
  *                 type: string
@@ -53,7 +53,7 @@ router.post('/register', authLimiter, validateRegister, handleValidationErrors, 
  *         application/json:
  *           schema:
  *             type: object
- *             required: [fullName, email, password, licenseNumber]
+ *             required: [fullName, email, phone, password, licenseNumber]
  *             properties:
  *               fullName:
  *                 type: string
@@ -89,9 +89,9 @@ router.post('/create-driver', verifyToken, requireRole('admin'), authLimiter, va
  *         application/json:
  *           schema:
  *             type: object
- *             required: [email, password]
+ *             required: [phone, password]
  *             properties:
- *               email:
+ *               phone:
  *                 type: string
  *               password:
  *                 type: string
@@ -115,9 +115,9 @@ router.post('/login/passenger', authLimiter, validateLogin, handleValidationErro
  *         application/json:
  *           schema:
  *             type: object
- *             required: [email, password]
+ *             required: [phone, password]
  *             properties:
- *               email:
+ *               phone:
  *                 type: string
  *               password:
  *                 type: string
@@ -141,9 +141,9 @@ router.post('/login/driver', authLimiter, validateLogin, handleValidationErrors,
  *         application/json:
  *           schema:
  *             type: object
- *             required: [email, password]
+ *             required: [phone, password]
  *             properties:
- *               email:
+ *               phone:
  *                 type: string
  *               password:
  *                 type: string

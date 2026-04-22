@@ -1,9 +1,9 @@
 import axios from 'axios';
-import https from 'https';
 import crypto from 'crypto';
+import https from 'https';
 import config from '../config/env';
-import logger from '../utils/logger';
 import { Transaction } from '../models';
+import logger from '../utils/logger';
 import walletService from './walletService';
 
 export interface CreateCheckoutInput {
@@ -249,7 +249,7 @@ export class WalletTelebirrService {
         amount,
         subject: 'Wallet Topup',
         outTradeNo,
-        notifyUrl: process.env.TELEBIRR_NOTIFY_URL || 'http://localhost:5001/api/telebirr/webhook',
+        notifyUrl: process.env.TELEBIRR_NOTIFY_URL || 'http://localhost:5001/api/v1/wallet/telebirr/webhook',
         redirectUrl: `${process.env.TELEBIRR_RETURN_URL || 'http://localhost:3000/payment/success'}?tradeNo=${outTradeNo}`,
         customer_phone: userPhone
       };
@@ -286,9 +286,17 @@ export class WalletTelebirrService {
       }
 
       if (status === 'SUCCESS') {
+        const expectedAmount = parseFloat(transaction.get('amount') as any);
+        if (Number.isFinite(expectedAmount) && Number.isFinite(amount) && expectedAmount !== amount) {
+          logger.warn(`Amount mismatch for ${outTradeNo}: expected ${expectedAmount}, got ${amount}`);
+          await transaction.update({ status: 'failed' });
+          return;
+        }
+
         await transaction.update({ status: 'completed' });
 
-        await walletService.addBalance(transaction.get('userId'), amount);
+        const creditAmount = Number.isFinite(amount) ? amount : expectedAmount;
+        await walletService.addBalance(transaction.get('userId'), creditAmount, { logTransaction: false });
 
         logger.info(`Payment successful for transaction ${outTradeNo}, amount: ${amount}`);
       } else {
