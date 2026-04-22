@@ -43,4 +43,9 @@ Trip.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
 Trip.belongsTo(Stop, { foreignKey: 'startStopId', as: 'startStop' });
 Trip.belongsTo(Stop, { foreignKey: 'endStopId', as: 'endStop' });
 
+// Reverse associations for queries
+Bus.hasMany(Trip, { foreignKey: 'busId', as: 'trips' });
+Route.hasMany(Trip, { foreignKey: 'routeId', as: 'trips' });
+User.hasMany(Trip, { foreignKey: 'userId', as: 'trips' });
+
 export { sequelize } from '../config/database';

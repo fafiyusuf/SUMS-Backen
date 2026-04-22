@@ -196,13 +196,63 @@ export class TripController {
     }
   }
 
-  async getDriverTripHistory(_req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+  async getDriverTripHistory(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Return empty history for now
+      const driverId = req.user?.userId;
+      if (!driverId) {
+        res.status(401).json({ success: false, message: 'Unauthorized' });
+        return;
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const offset = (page - 1) * limit;
+
+      // Find bus assigned to driver
+      const bus = await Bus.findOne({ where: { driverId } });
+      if (!bus) {
+        res.status(200).json({
+          success: true,
+          message: 'Driver trip history retrieved',
+          data: { trips: [], total: 0, page, limit }
+        });
+        return;
+      }
+
+      // Get trips for this bus with included relations
+      const trips = await Trip.findAll({
+        where: { busId: bus.id },
+        include: [
+          { model: Bus, as: 'bus', attributes: ['registrationNumber', 'capacity'] },
+          { model: Route, as: 'route', attributes: ['id', 'name', 'startPoint', 'endPoint', 'distance', 'estimatedDuration'] }
+        ],
+        limit,
+        offset,
+        order: [['createdAt', 'DESC']]
+      });
+
+      const total = await Trip.count({ where: { busId: bus.id } });
+
+      // Format trips with calculated hoursDriven
+      const formattedTrips = trips.map(trip => {
+        const tripData = trip.toJSON();
+        const hoursDriven = trip.endTime
+          ? (new Date(trip.endTime).getTime() - new Date(trip.startTime).getTime()) / (1000 * 60 * 60)
+          : undefined;
+        return {
+          ...tripData,
+          hoursDriven,
+          startTime: tripData.startTime?.toISOString?.() || tripData.startTime,
+          endTime: tripData.endTime?.toISOString?.() || tripData.endTime,
+          createdAt: tripData.createdAt?.toISOString?.() || tripData.createdAt,
+          updatedAt: tripData.updatedAt?.toISOString?.() || tripData.updatedAt
+        };
+      });
+
       res.status(200).json({
         success: true,
         message: 'Driver trip history retrieved',
-        data: [] 
+        data: { trips: formattedTrips, total, page, limit }
       });
     } catch (error) {
       next(error);
