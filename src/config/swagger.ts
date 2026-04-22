@@ -24,7 +24,7 @@ const options: swaggerJsdoc.Options = {
       },
     },
   },
-  apis: ['./src/routes/*.ts', './src/models/*.ts'], // Generate docs from JSDoc comments in routes and models
+  apis: ['./src/modules/**/*.routes.ts', './src/models/*.ts'], // Generate docs from JSDoc comments in routes and models
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
