@@ -8,9 +8,10 @@ import User from './User';
 import Wallet from './Wallet';
 import Incident from './Incident';
 import GPSCoordinate from './GPSCoordinate';
+import Schedule from './Schedule';
 
 // Export all models
-export { Bus, Route, SmartCard, Stop, Transaction, Trip, User, Wallet, Incident, GPSCoordinate };
+export { Bus, Route, SmartCard, Stop, Transaction, Trip, User, Wallet, Incident, GPSCoordinate, Schedule };
 
 // --- Define associations ---
 
@@ -33,6 +34,14 @@ Stop.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
 // Route & Bus (1:N)
 Route.hasMany(Bus, { foreignKey: 'routeId', as: 'buses' });
 Bus.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+
+// Route & Schedule (1:N)
+Route.hasMany(Schedule, { foreignKey: 'routeId', as: 'schedules' });
+Schedule.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+
+// Bus & Schedule (1:N)
+Bus.hasMany(Schedule, { foreignKey: 'busId', as: 'schedules' });
+Schedule.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
 
 // Bus & Driver (User) (1:1)
 User.hasOne(Bus, { foreignKey: 'driverId', as: 'assignedBus' });
