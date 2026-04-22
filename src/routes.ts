@@ -12,6 +12,7 @@ import telebirrRoutes from './modules/telebirr/telebirr.routes';
 import telebirrH5Routes from './modules/telebirrH5/telebirrH5.routes';
 import tripRoutes from './modules/trip/trip.routes';
 import walletRoutes from './modules/wallet/wallet.routes';
+import scheduleRoutes from './modules/schedule/schedule.routes';
 
 const router = express.Router();
 
@@ -28,5 +29,6 @@ router.use('/telebirr', telebirrRoutes);
 router.use('/telebirr-h5', telebirrH5Routes);
 router.use('/trips', tripRoutes);
 router.use('/wallet', walletRoutes);
+router.use('/schedule', scheduleRoutes);
 
 export default router;
