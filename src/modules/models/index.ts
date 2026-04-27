@@ -1,0 +1,71 @@
+// Export all models from their respective modules
+export { Bus } from '../bus/bus.model';
+export { GPSCoordinate } from '../gps/gps.model';
+export { Incident } from '../incident/incident.model';
+export { Route } from '../route/route.model';
+export { SmartCard } from '../card/smartCard.model';
+export { Stop } from '../stop/stop.model';
+export { Transaction } from '../wallet/transaction.model';
+export { Trip } from '../trip/trip.model';
+export { User } from '../user/user.model';
+export { Wallet } from '../wallet/wallet.model';
+
+// Import models for associations
+import { Bus } from '../bus/bus.model';
+import { GPSCoordinate } from '../gps/gps.model';
+import { Incident } from '../incident/incident.model';
+import { Route } from '../route/route.model';
+import { SmartCard } from '../card/smartCard.model';
+import { Stop } from '../stop/stop.model';
+import { Transaction } from '../wallet/transaction.model';
+import { Trip } from '../trip/trip.model';
+import { User } from '../user/user.model';
+import { Wallet } from '../wallet/wallet.model';
+
+// --- Define associations ---
+
+// User & Wallet (1:1)
+User.hasOne(Wallet, { foreignKey: 'userId', as: 'wallet' });
+Wallet.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// User & SmartCard (1:N)
+User.hasMany(SmartCard, { foreignKey: 'userId', as: 'cards' });
+SmartCard.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// User & Transaction (1:N)
+User.hasMany(Transaction, { foreignKey: 'userId', as: 'transactions' });
+Transaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Route & Stop (1:N)
+Route.hasMany(Stop, { foreignKey: 'routeId', as: 'stops' });
+Stop.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+
+// Route & Bus (1:N)
+Route.hasMany(Bus, { foreignKey: 'routeId', as: 'buses' });
+Bus.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+
+// Bus & Driver (User) (1:1)
+User.hasOne(Bus, { foreignKey: 'driverId', as: 'assignedBus' });
+Bus.belongsTo(User, { foreignKey: 'driverId', as: 'driver' });
+
+// Trip associations
+Trip.belongsTo(User, { foreignKey: 'userId', as: 'passenger' });
+Trip.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
+Trip.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+Trip.belongsTo(Stop, { foreignKey: 'startStopId', as: 'startStop' });
+Trip.belongsTo(Stop, { foreignKey: 'endStopId', as: 'endStop' });
+
+// Reverse associations for queries
+Bus.hasMany(Trip, { foreignKey: 'busId', as: 'trips' });
+Route.hasMany(Trip, { foreignKey: 'routeId', as: 'trips' });
+User.hasMany(Trip, { foreignKey: 'userId', as: 'trips' });
+
+// Bus & GPS Coordinates (1:N)
+Bus.hasMany(GPSCoordinate, { foreignKey: 'busId', as: 'gpsCoordinates' });
+GPSCoordinate.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
+
+// Bus & Incidents (1:N)
+Bus.hasMany(Incident, { foreignKey: 'busId', as: 'incidents' });
+Incident.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
+
+export { sequelize } from '../../config/database';

@@ -1,7 +1,7 @@
 import { sequelize } from '../config/database';
 
 // Import models to ensure associations are loaded
-import '../models';
+import '../modules/models';
 
 // Define associations - all associations are now defined in models/index.ts
 // This function ensures models are imported and associations are set up

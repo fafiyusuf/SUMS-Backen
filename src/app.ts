@@ -11,9 +11,6 @@ import routes from './routes';
 
 const app: Express = express();
 
-// Trust proxy to allow express-rate-limit to work behind a reverse proxy (like ngrok)
-app.set('trust proxy', 1);
-
 // Middleware
 app.use(helmet());
 app.use(cors({
@@ -21,11 +18,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(morgan('dev'));
-app.use(express.json({
-  verify: (req, _res, buf) => {
-    (req as any).rawBody = buf;
-  }
-}));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
