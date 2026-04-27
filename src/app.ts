@@ -11,10 +11,13 @@ import routes from './routes';
 
 const app: Express = express();
 
+// Trust proxy to allow express-rate-limit to work behind a reverse proxy (like ngrok)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: config.cors.origin,
+  origin: config.cors.origin.includes('*') ? '*' : config.cors.origin,
   credentials: true
 }));
 app.use(morgan('dev'));
