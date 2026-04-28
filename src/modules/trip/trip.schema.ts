@@ -55,3 +55,22 @@ export const getAllTripsSchema = z.object({
     limit: z.string().regex(/^\d+$/).optional().transform(val => val ? parseInt(val, 10) : 10),
   })
 });
+
+export const simulateTapInSchema = z.object({
+  body: z.object({
+    cardId: z.string().min(1, 'Card ID is required'),
+    busId: z.string().uuid('Invalid Bus ID format'),
+    routeId: z.string().uuid('Invalid Route ID format'),
+    startStopId: z.string().uuid('Invalid Start Stop ID format'),
+  })
+});
+
+export const simulateTapOutSchema = z.object({
+  body: z.object({
+    cardId: z.string().min(1, 'Card ID is required'),
+    busId: z.string().uuid('Invalid Bus ID format'),
+    routeId: z.string().uuid('Invalid Route ID format'),
+    endStopId: z.string().uuid('Invalid End Stop ID format'),
+    fare: z.number().min(0, 'Fare cannot be negative').optional().default(15), 
+  })
+});

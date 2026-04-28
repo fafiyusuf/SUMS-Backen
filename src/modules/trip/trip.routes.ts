@@ -10,7 +10,9 @@ import {
     getAllTripsSchema,
     getPassengerHistorySchema,
     getTripSchema,
-    getUserTripsSchema
+    getUserTripsSchema,
+    simulateTapInSchema,
+    simulateTapOutSchema
 } from './trip.schema';
 
 const router = express.Router();
@@ -246,5 +248,9 @@ router.put('/:id/cancel', verifyToken, validate(cancelTripSchema), tripControlle
  */
 
 router.get('/', verifyToken, requireRole('admin'), validate(getAllTripsSchema), tripController.getAllTrips);
+
+// --- Simulator Endpoints ---
+router.post('/simulate/tap-in', validate(simulateTapInSchema), tripController.simulateTapIn);
+router.post('/simulate/tap-out', validate(simulateTapOutSchema), tripController.simulateTapOut);
 
 export default router;

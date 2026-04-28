@@ -41,7 +41,7 @@ Incident.init(
       references: {
         model: 'buses',
         key: 'id'
-      }
+      } 
     },
     type: {
       type: DataTypes.STRING,

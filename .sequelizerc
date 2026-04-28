@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const path = require('path');
 
 module.exports = {
@@ -7,13 +6,3 @@ module.exports = {
   'seeders-path': path.resolve('src', 'database', 'seeders'),
   'migrations-path': path.resolve('src', 'database', 'migrations')
 };
-=======
-const path = require('path');
-
-module.exports = {
-  'config': path.resolve('config', 'database.json'),
-  'models-path': path.resolve('src', 'models'),
-  'seeders-path': path.resolve('src', 'database', 'seeders'),
-  'migrations-path': path.resolve('src', 'database', 'migrations')
-};
->>>>>>> 0c5ebe6b2019fd1d9eddeb81887667d46f073bd6
