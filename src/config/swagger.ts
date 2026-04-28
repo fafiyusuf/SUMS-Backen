@@ -1,4 +1,8 @@
+import dotenv from 'dotenv';
 import swaggerJsdoc from 'swagger-jsdoc';
+dotenv.config();
+
+const PORT = process.env.PORT || 3000;
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -10,7 +14,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000/api/v1',
+        url: `http://localhost:${PORT}/api/v1`,
         description: 'Development server',
       },
     ],
@@ -24,7 +28,7 @@ const options: swaggerJsdoc.Options = {
       },
     },
   },
-  apis: ['./src/routes/*.ts', './src/models/*.ts'], // Generate docs from JSDoc comments in routes and models
+  apis: ['./src/modules/**/*.routes.ts', './src/modules/**/*.model.ts', './src/routes.ts'], // Generate docs from JSDoc comments in routes and models
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
