@@ -27,14 +27,7 @@ const router = express.Router();
  *         application/json:
  *           schema:
  *             type: object
-<<<<<<< HEAD:src/routes/authRoutes.ts
  *             required: [fullName, email, phone, password]
-=======
- *             required:
- *               - fullName
- *               - email
- *               - password
->>>>>>> 0c5ebe6b2019fd1d9eddeb81887667d46f073bd6:src/modules/auth/auth.routes.ts
  *             properties:
  *               fullName:
  *                 type: string
@@ -71,15 +64,7 @@ router.post('/register', authLimiter, validate(registerSchema), (req: Request, r
  *         application/json:
  *           schema:
  *             type: object
-<<<<<<< HEAD:src/routes/authRoutes.ts
  *             required: [fullName, email, phone, password, licenseNumber]
-=======
- *             required:
- *               - fullName
- *               - email
- *               - password
- *               - licenseNumber
->>>>>>> 0c5ebe6b2019fd1d9eddeb81887667d46f073bd6:src/modules/auth/auth.routes.ts
  *             properties:
  *               fullName:
  *                 type: string
@@ -117,13 +102,7 @@ router.post('/create-driver', verifyToken, requireRole('admin'), authLimiter, va
  *         application/json:
  *           schema:
  *             type: object
-<<<<<<< HEAD:src/routes/authRoutes.ts
  *             required: [phone, password]
-=======
- *             required:
- *               - email
- *               - password
->>>>>>> 0c5ebe6b2019fd1d9eddeb81887667d46f073bd6:src/modules/auth/auth.routes.ts
  *             properties:
  *               phone:
  *                 type: string
@@ -153,13 +132,7 @@ router.post('/login/passenger', authLimiter, validate(loginSchema), (req: Reques
  *         application/json:
  *           schema:
  *             type: object
-<<<<<<< HEAD:src/routes/authRoutes.ts
  *             required: [phone, password]
-=======
- *             required:
- *               - email
- *               - password
->>>>>>> 0c5ebe6b2019fd1d9eddeb81887667d46f073bd6:src/modules/auth/auth.routes.ts
  *             properties:
  *               phone:
  *                 type: string
@@ -189,13 +162,7 @@ router.post('/login/driver', authLimiter, validate(loginSchema), (req: Request, 
  *         application/json:
  *           schema:
  *             type: object
-<<<<<<< HEAD:src/routes/authRoutes.ts
  *             required: [phone, password]
-=======
- *             required:
- *               - email
- *               - password
->>>>>>> 0c5ebe6b2019fd1d9eddeb81887667d46f073bd6:src/modules/auth/auth.routes.ts
  *             properties:
  *               phone:
  *                 type: string

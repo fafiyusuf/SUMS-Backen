@@ -1,25 +1,27 @@
 // Export all models from their respective modules
 export { Bus } from '../bus/bus.model';
+export { SmartCard } from '../card/smartCard.model';
 export { GPSCoordinate } from '../gps/gps.model';
 export { Incident } from '../incident/incident.model';
 export { Route } from '../route/route.model';
-export { SmartCard } from '../card/smartCard.model';
+export { Schedule } from '../schedule/schedule.model';
 export { Stop } from '../stop/stop.model';
-export { Transaction } from '../wallet/transaction.model';
 export { Trip } from '../trip/trip.model';
 export { User } from '../user/user.model';
+export { Transaction } from '../wallet/transaction.model';
 export { Wallet } from '../wallet/wallet.model';
 
 // Import models for associations
 import { Bus } from '../bus/bus.model';
+import { SmartCard } from '../card/smartCard.model';
 import { GPSCoordinate } from '../gps/gps.model';
 import { Incident } from '../incident/incident.model';
 import { Route } from '../route/route.model';
-import { SmartCard } from '../card/smartCard.model';
+import { Schedule } from '../schedule/schedule.model';
 import { Stop } from '../stop/stop.model';
-import { Transaction } from '../wallet/transaction.model';
 import { Trip } from '../trip/trip.model';
 import { User } from '../user/user.model';
+import { Transaction } from '../wallet/transaction.model';
 import { Wallet } from '../wallet/wallet.model';
 
 // --- Define associations ---
@@ -67,5 +69,13 @@ GPSCoordinate.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
 // Bus & Incidents (1:N)
 Bus.hasMany(Incident, { foreignKey: 'busId', as: 'incidents' });
 Incident.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
+
+// Route & Schedule (1:N)
+Route.hasMany(Schedule, { foreignKey: 'routeId', as: 'schedules' });
+Schedule.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+
+// Bus & Schedule (1:N)
+Bus.hasMany(Schedule, { foreignKey: 'busId', as: 'schedules' });
+Schedule.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
 
 export { sequelize } from '../../config/database';
