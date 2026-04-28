@@ -1,5 +1,5 @@
+import { NextFunction, Request, Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
-import { Request, Response, NextFunction } from 'express';
 
 export const validateRegister = [
   body('email')
@@ -12,7 +12,7 @@ export const validateRegister = [
     .notEmpty().withMessage('Full name is required')
     .trim().escape(),
   body('phone')
-    .optional({ checkFalsy: true })
+    .notEmpty().withMessage('Phone number is required')
     .isMobilePhone('any').withMessage('Please provide a valid phone number')
 ];
 
@@ -24,9 +24,9 @@ export const validateCreateDriver = [
 ];
 
 export const validateLogin = [
-  body('email')
-    .isEmail().withMessage('Please provide a valid email address')
-    .normalizeEmail(),
+  body('phone')
+    .notEmpty().withMessage('Phone number is required')
+    .isMobilePhone('any').withMessage('Please provide a valid phone number'),
   body('password')
     .notEmpty().withMessage('Password is required')
     .escape()
@@ -71,6 +71,19 @@ export const validatePagination = [
 
 export const validateUUID = (paramName: string = 'id') => [
   param(paramName).isUUID().withMessage(`Invalid ${paramName} format`)
+];
+
+export const validateLinkTelebirr = [
+  body('phone')
+    .notEmpty().withMessage('Phone number is required')
+    .isString().trim()
+    .matches(/^(09\d{8}|2519\d{8}|9\d{8})$/, 'Phone must be Ethiopian format (09xxxxxxxx, 2519xxxxxxxx, or 9xxxxxxx)')
+];
+
+export const validateTopup = [
+  body('amount')
+    .isFloat({ gt: 0 }).withMessage('Amount must be greater than 0')
+    .isNumeric().withMessage('Amount must be a number')
 ];
 
 export const handleValidationErrors = (req: Request, res: Response, next: NextFunction): void => {

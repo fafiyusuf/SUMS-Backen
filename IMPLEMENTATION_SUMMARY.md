@@ -64,7 +64,7 @@ This document provides a checklist of all files created for the SUMS Backend Typ
 
 - [x] `src/services/authService.ts` - Authentication logic
 - [x] `src/services/walletService.ts` - Wallet business logic
-- [x] `src/services/telebirrService.ts` - Payment integration
+- [x] `src/services/walletTelebirrService.ts` - Payment integration (wallet-scoped)
 - [x] `src/services/fareService.ts` - Fare calculation
 - [x] `src/services/etaService.ts` - ETA calculation
 - [x] `src/services/notificationService.ts` - Notifications
