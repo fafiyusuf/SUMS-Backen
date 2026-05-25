@@ -27,8 +27,9 @@ export class RouteController {
 
   async getAllRoutes(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const page = req.query.page as unknown as number;
-      const limit = req.query.limit as unknown as number;
+      // Parse query params as integers with defaults
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
       const status = req.query.status as string | undefined;
 
       const result = await routeService.getAllRoutes(page, limit, status);

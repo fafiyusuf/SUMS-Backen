@@ -27,8 +27,8 @@ export class BusController {
 
   async getAllBuses(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const page = req.query.page as unknown as number;
-      const limit = req.query.limit as unknown as number;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
       const result = await busService.getAllBuses(page, limit);
       res.status(200).json({ success: true, message: 'Buses retrieved', data: result });
     } catch (error) {
