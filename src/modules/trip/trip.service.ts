@@ -1,7 +1,7 @@
-import { Trip } from './trip.model';
+import { sequelize } from '../../config/database';
 import { SmartCard } from '../card/smartCard.model';
 import { Wallet } from '../wallet/wallet.model';
-import { sequelize } from '../../config/database';
+import { Trip } from './trip.model';
 
 export class TripService {
   async createTrip(tripData: any) {
