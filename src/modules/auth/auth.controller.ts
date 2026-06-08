@@ -76,30 +76,7 @@ export class AuthController {
     }
   }
 
-  async refreshToken(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { authorization } = req.headers;
-      const token = authorization?.split(' ')[1];
 
-      if (!token) {
-        res.status(400).json({
-          success: false,
-          message: 'Token not provided'
-        });
-        return;
-      }
-
-      const newToken = await authService.refreshToken(token);
-
-      res.status(200).json({
-        success: true,
-        message: 'Token refreshed',
-        data: { token: newToken }
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
 
   async logout(_req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {

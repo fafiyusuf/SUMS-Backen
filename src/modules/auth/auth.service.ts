@@ -178,19 +178,7 @@ export class AuthService {
     }
   }
 
-  async refreshToken(token: string): Promise<string> {
-    try {
-      const decoded = jwt.verify(token, config.jwt.secret, { ignoreExpiration: true }) as any;
-      const newToken = jwt.sign(
-        { userId: decoded.userId, role: decoded.role },
-        config.jwt.secret,
-        { expiresIn: config.jwt.expiresIn as any }
-      );
-      return newToken;
-    } catch (error) {
-      throw new Error('Failed to refresh token');
-    }
-  }
+
 }
 
 export default new AuthService();
