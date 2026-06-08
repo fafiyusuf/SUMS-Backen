@@ -52,30 +52,30 @@ Bus.belongsTo(User, { foreignKey: 'driverId', as: 'driver' });
 
 // Trip associations
 Trip.belongsTo(User, { foreignKey: 'userId', as: 'passenger' });
-Trip.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
+Trip.belongsTo(Bus, { foreignKey: 'busId', as: 'bus', onDelete: 'CASCADE' });
 Trip.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
 Trip.belongsTo(Stop, { foreignKey: 'startStopId', as: 'startStop' });
 Trip.belongsTo(Stop, { foreignKey: 'endStopId', as: 'endStop' });
 
 // Reverse associations for queries
-Bus.hasMany(Trip, { foreignKey: 'busId', as: 'trips' });
+Bus.hasMany(Trip, { foreignKey: 'busId', as: 'trips', onDelete: 'CASCADE' });
 Route.hasMany(Trip, { foreignKey: 'routeId', as: 'trips' });
 User.hasMany(Trip, { foreignKey: 'userId', as: 'trips' });
 
 // Bus & GPS Coordinates (1:N)
-Bus.hasMany(GPSCoordinate, { foreignKey: 'busId', as: 'gpsCoordinates' });
-GPSCoordinate.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
+Bus.hasMany(GPSCoordinate, { foreignKey: 'busId', as: 'gpsCoordinates', onDelete: 'CASCADE' });
+GPSCoordinate.belongsTo(Bus, { foreignKey: 'busId', as: 'bus', onDelete: 'CASCADE' });
 
 // Bus & Incidents (1:N)
-Bus.hasMany(Incident, { foreignKey: 'busId', as: 'incidents' });
-Incident.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
+Bus.hasMany(Incident, { foreignKey: 'busId', as: 'incidents', onDelete: 'CASCADE' });
+Incident.belongsTo(Bus, { foreignKey: 'busId', as: 'bus', onDelete: 'CASCADE' });
 
 // Route & Schedule (1:N)
 Route.hasMany(Schedule, { foreignKey: 'routeId', as: 'schedules' });
 Schedule.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
 
 // Bus & Schedule (1:N)
-Bus.hasMany(Schedule, { foreignKey: 'busId', as: 'schedules' });
-Schedule.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
+Bus.hasMany(Schedule, { foreignKey: 'busId', as: 'schedules', onDelete: 'CASCADE' });
+Schedule.belongsTo(Bus, { foreignKey: 'busId', as: 'bus', onDelete: 'CASCADE' });
 
 export { sequelize } from '../../config/database';

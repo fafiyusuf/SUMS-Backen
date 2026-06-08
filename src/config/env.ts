@@ -8,7 +8,7 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL || '',
   jwt: {
     secret: process.env.JWT_SECRET || 'your_super_secret_key_here',
-    expiresIn: process.env.JWT_EXPIRES_IN || '15m',
+    expiresIn: process.env.JWT_EXPIRES_IN || '30d',
     refreshSecret: process.env.JWT_REFRESH_SECRET || 'refresh_secret_here',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d'
   },
