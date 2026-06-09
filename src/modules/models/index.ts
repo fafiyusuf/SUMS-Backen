@@ -39,12 +39,12 @@ User.hasMany(Transaction, { foreignKey: 'userId', as: 'transactions' });
 Transaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Route & Stop (1:N)
-Route.hasMany(Stop, { foreignKey: 'routeId', as: 'stops' });
-Stop.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+Route.hasMany(Stop, { foreignKey: 'routeId', as: 'stops', onDelete: 'CASCADE' });
+Stop.belongsTo(Route, { foreignKey: 'routeId', as: 'route', onDelete: 'CASCADE' });
 
 // Route & Bus (1:N)
-Route.hasMany(Bus, { foreignKey: 'routeId', as: 'buses' });
-Bus.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+Route.hasMany(Bus, { foreignKey: 'routeId', as: 'buses', onDelete: 'CASCADE' });
+Bus.belongsTo(Route, { foreignKey: 'routeId', as: 'route', onDelete: 'CASCADE' });
 
 // Bus & Driver (User) (1:1)
 User.hasOne(Bus, { foreignKey: 'driverId', as: 'assignedBus' });
@@ -53,13 +53,13 @@ Bus.belongsTo(User, { foreignKey: 'driverId', as: 'driver' });
 // Trip associations
 Trip.belongsTo(User, { foreignKey: 'userId', as: 'passenger' });
 Trip.belongsTo(Bus, { foreignKey: 'busId', as: 'bus', onDelete: 'CASCADE' });
-Trip.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+Trip.belongsTo(Route, { foreignKey: 'routeId', as: 'route', onDelete: 'CASCADE' });
 Trip.belongsTo(Stop, { foreignKey: 'startStopId', as: 'startStop' });
 Trip.belongsTo(Stop, { foreignKey: 'endStopId', as: 'endStop' });
 
 // Reverse associations for queries
 Bus.hasMany(Trip, { foreignKey: 'busId', as: 'trips', onDelete: 'CASCADE' });
-Route.hasMany(Trip, { foreignKey: 'routeId', as: 'trips' });
+Route.hasMany(Trip, { foreignKey: 'routeId', as: 'trips', onDelete: 'CASCADE' });
 User.hasMany(Trip, { foreignKey: 'userId', as: 'trips' });
 
 // Bus & GPS Coordinates (1:N)
@@ -71,8 +71,8 @@ Bus.hasMany(Incident, { foreignKey: 'busId', as: 'incidents', onDelete: 'CASCADE
 Incident.belongsTo(Bus, { foreignKey: 'busId', as: 'bus', onDelete: 'CASCADE' });
 
 // Route & Schedule (1:N)
-Route.hasMany(Schedule, { foreignKey: 'routeId', as: 'schedules' });
-Schedule.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+Route.hasMany(Schedule, { foreignKey: 'routeId', as: 'schedules', onDelete: 'CASCADE' });
+Schedule.belongsTo(Route, { foreignKey: 'routeId', as: 'route', onDelete: 'CASCADE' });
 
 // Bus & Schedule (1:N)
 Bus.hasMany(Schedule, { foreignKey: 'busId', as: 'schedules', onDelete: 'CASCADE' });

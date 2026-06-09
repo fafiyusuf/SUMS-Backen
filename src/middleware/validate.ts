@@ -12,11 +12,12 @@ export const validate = (schema: ZodSchema<any>) =>
       });
       return next();
     } catch (error: any) {
-      if (error && error.errors) {
-        logger.warn(`Validation error: ${JSON.stringify(error.errors)}`);
+      if (error && (error.errors || error.issues || error.name === 'ZodError')) {
+        const issues = error.errors || error.issues || [];
+        logger.warn(`Validation error: ${JSON.stringify(issues)}`);
         
         // Format to match old express-validator response shape for client compatibility
-        const formattedErrors = error.errors.map((err: any) => ({
+        const formattedErrors = issues.map((err: any) => ({
           field: err.path.join('.'),
           message: err.message
         }));

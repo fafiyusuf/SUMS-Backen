@@ -28,3 +28,15 @@ export const getAllUsersSchema = z.object({
     limit: z.string().regex(/^\d+$/).optional().transform(val => val ? parseInt(val, 10) : 10),
   })
 });
+
+export const updateUserSchema = z.object({
+  body: z.object({
+    fullName: z.string().min(1).optional(),
+    email: z.string().email('Invalid email address').optional(),
+    role: z.enum(['admin', 'driver', 'passenger']).optional(),
+    status: z.enum(['active', 'suspended', 'inactive']).optional()
+  }),
+  params: z.object({
+    id: z.string().uuid('Invalid user ID format'),
+  })
+});

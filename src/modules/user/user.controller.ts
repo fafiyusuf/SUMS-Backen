@@ -87,6 +87,25 @@ export class UserController {
       res.status(500).json({ success: false, message: 'Server Error', error });
     }
   }
+
+  async updateUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { fullName, email, role, status } = req.body;
+      const result = await userService.updateUser(id, { fullName, email, role, status });
+      res.status(200).json({
+        success: true,
+        message: 'User updated successfully',
+        data: result
+      });
+    } catch (error: any) {
+      if (error.message === 'User not found') {
+        res.status(404).json({ success: false, message: error.message });
+        return;
+      }
+      res.status(500).json({ success: false, message: 'Server Error', error });
+    }
+  }
 }
 
 export default new UserController();

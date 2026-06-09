@@ -1,71 +1,132 @@
-// import { User } from '../../../src/models';
-// import authService from '../../../src/services/authService';
+import { User } from '../../../src/modules/user/user.model';
+import { Wallet } from '../../../src/modules/wallet/wallet.model';
+import { SmartCard } from '../../../src/modules/card/smartCard.model';
+import authService from '../../../src/modules/auth/auth.service';
+import bcrypt from 'bcryptjs';
 
-// describe('AuthService', () => {
-//   describe('registerUser', () => {
-//     it('should successfully register a new user', async () => {
-//       const userData = {
-//         fullName: 'John Doe',
-//         email: 'john@example.com',
-//         password: 'password123'
-//       };
+jest.mock('../../../src/modules/user/user.model', () => ({
+  User: {
+    findOne: jest.fn(),
+    create: jest.fn()
+  }
+}));
 
-//       // Mock the User.create method
-//       jest.spyOn(User, 'create').mockResolvedValue({
-//         id: '123',
-//         fullName: userData.fullName,
-//         email: userData.email,
-//         password: userData.password,
-//         role: 'passenger',
-//         status: 'active'
-//       } as any);
+jest.mock('../../../src/modules/wallet/wallet.model', () => ({
+  Wallet: {
+    create: jest.fn()
+  }
+}));
 
-//       const result = await authService.registerUser(userData);
+jest.mock('../../../src/modules/card/smartCard.model', () => ({
+  SmartCard: {
+    create: jest.fn()
+  }
+}));
 
-//       expect(result).toHaveProperty('userId');
-//       expect(result).toHaveProperty('email');
-//       expect(result.email).toBe(userData.email);
-//     });
+jest.mock('../../../src/database/connection', () => ({
+  __esModule: true,
+  default: {
+    transaction: jest.fn().mockResolvedValue({
+      commit: jest.fn(),
+      rollback: jest.fn()
+    })
+  }
+}));
 
-//     it('should throw error if user already exists', async () => {
-//       const userData = {
-//         fullName: 'John Doe',
-//         email: 'existing@example.com',
-//         password: 'password123'
-//       };
+describe('AuthService', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-//       jest.spyOn(User, 'findOne').mockResolvedValue({} as any);
+  describe('registerPassenger', () => {
+    it('should successfully register a new passenger', async () => {
+      const userData = {
+        fullName: 'John Doe',
+        email: 'john@example.com',
+        phone: '0912345678',
+        password: 'password123'
+      };
 
-//       await expect(authService.registerUser(userData)).rejects.toThrow('User already exists');
-//     });
-//   });
+      (User.findOne as jest.Mock).mockResolvedValue(null);
+      (User.create as jest.Mock).mockResolvedValue({
+        id: '123',
+        fullName: userData.fullName,
+        email: userData.email,
+        phone: userData.phone,
+        password: 'hashedpassword',
+        role: 'passenger',
+        status: 'active'
+      });
+      (Wallet.create as jest.Mock).mockResolvedValue({});
+      (SmartCard.create as jest.Mock).mockResolvedValue({});
 
-//   describe('loginUser', () => {
-//     it('should successfully login a user', async () => {
-//       const email = 'user@example.com';
-//       const password = 'password123';
+      const result = await authService.registerPassenger(userData);
 
-//       jest.spyOn(User, 'findOne').mockResolvedValue({
-//         id: '123',
-//         email,
-//         password: '$2b$10$hashedpassword',
-//         role: 'passenger',
-//         status: 'active'
-//       } as any);
+      expect(result).toHaveProperty('userId', '123');
+      expect(result).toHaveProperty('email', userData.email);
+      expect(result).toHaveProperty('phone', userData.phone);
+      expect(User.create).toHaveBeenCalled();
+      expect(Wallet.create).toHaveBeenCalled();
+      expect(SmartCard.create).toHaveBeenCalled();
+    });
 
-//       jest.spyOn(require('bcrypt'), 'compare').mockResolvedValue(true);
+    it('should throw error if user already exists by email', async () => {
+      const userData = {
+        fullName: 'John Doe',
+        email: 'existing@example.com',
+        phone: '0912345678',
+        password: 'password123'
+      };
 
-//       const result = await authService.loginUser(email, password);
+      (User.findOne as jest.Mock).mockResolvedValue({ id: '123' });
 
-//       expect(result).toHaveProperty('token');
-//       expect(result).toHaveProperty('user');
-//       expect(result.user.email).toBe(email);
-//     });
+      await expect(authService.registerPassenger(userData)).rejects.toThrow('User already exists');
+    });
+  });
 
-//     it('should throw error for invalid credentials', async () => {
-//       jest.spyOn(User, 'findOne').mockResolvedValue(null);
+  describe('loginUser', () => {
+    it('should successfully login a user', async () => {
+      const phone = '0912345678';
+      const password = 'password123';
 
-//       await expect(authService.loginUser('wrong@example.com', 'password')).rejects.toThrow('Invalid credentials');
-//     });
-//   });
-// });
+      const mockUser = {
+        id: '123',
+        email: 'john@example.com',
+        phone,
+        password: bcrypt.hashSync(password, 10),
+        role: 'passenger',
+        status: 'active'
+      };
+
+      (User.findOne as jest.Mock).mockResolvedValue(mockUser);
+
+      const result = await authService.loginUser(phone, password, 'passenger');
+
+      expect(result).toHaveProperty('token');
+      expect(result).toHaveProperty('user');
+      expect(result.user.phone).toBe(phone);
+      expect(result.user.role).toBe('passenger');
+    });
+
+    it('should throw error for invalid credentials if user not found', async () => {
+      (User.findOne as jest.Mock).mockResolvedValue(null);
+
+      await expect(authService.loginUser('0900000000', 'password', 'passenger')).rejects.toThrow('Invalid credentials');
+    });
+
+    it('should throw error if role does not match', async () => {
+      const mockUser = {
+        id: '123',
+        email: 'john@example.com',
+        phone: '0912345678',
+        password: 'hashedpassword',
+        role: 'driver',
+        status: 'active'
+      };
+
+      (User.findOne as jest.Mock).mockResolvedValue(mockUser);
+
+      await expect(authService.loginUser('0912345678', 'password', 'passenger')).rejects.toThrow('Invalid credentials for passenger login');
+    });
+  });
+});

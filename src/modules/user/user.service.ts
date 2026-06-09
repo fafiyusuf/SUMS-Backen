@@ -60,6 +60,22 @@ export class UserService {
     delete (userData as any).password;
     return userData;
   }
+
+  async updateUser(id: string, data: { fullName?: string; email?: string; role?: 'admin' | 'driver' | 'passenger'; status?: 'active' | 'suspended' | 'inactive' }) {
+    const user = await User.findByPk(id);
+    if (!user) throw new Error('User not found');
+
+    if (data.fullName !== undefined) user.fullName = data.fullName;
+    if (data.email !== undefined) user.email = data.email;
+    if (data.role !== undefined) user.role = data.role;
+    if (data.status !== undefined) user.status = data.status;
+
+    await user.save();
+
+    const userData = user.toJSON();
+    delete (userData as any).password;
+    return userData;
+  }
 }
 
 export default new UserService();

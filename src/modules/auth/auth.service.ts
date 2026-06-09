@@ -40,9 +40,11 @@ export class AuthService {
         throw new Error('User already exists');
       }
 
-      const existingPhone = await User.findOne({ where: { phone: userData.phone } });
-      if (existingPhone) {
-        throw new Error('Phone number already in use');
+      if (userData.phone) {
+        const existingPhone = await User.findOne({ where: { phone: userData.phone } });
+        if (existingPhone) {
+          throw new Error('Phone number already in use');
+        }
       }
 
       // Hash password
@@ -90,9 +92,11 @@ export class AuthService {
         throw new Error('User already exists');
       }
 
-      const existingPhone = await User.findOne({ where: { phone: driverData.phone } });
-      if (existingPhone) {
-        throw new Error('Phone number already in use');
+      if (driverData.phone) {
+        const existingPhone = await User.findOne({ where: { phone: driverData.phone } });
+        if (existingPhone) {
+          throw new Error('Phone number already in use');
+        }
       }
 
       const saltRounds = 10;
@@ -125,25 +129,35 @@ export class AuthService {
     try {
       const user = await User.findOne({ where: { phone } });
       if (!user) {
-        throw new Error('Invalid credentials');
+        const err = new Error('Invalid credentials') as any;
+        err.status = 401;
+        throw err;
       }
 
       if (!user.phone) {
-        throw new Error('User phone number is missing');
+        const err = new Error('User phone number is missing') as any;
+        err.status = 400;
+        throw err;
       }
 
       if (user.role !== requiredRole) {
-        throw new Error(`Invalid credentials for ${requiredRole} login`);
+        const err = new Error(`Invalid credentials for ${requiredRole} login`) as any;
+        err.status = 401;
+        throw err;
       }
 
       // Check if user is active
       if (user.status !== 'active') {
-        throw new Error('User account is not active');
+        const err = new Error('User account is not active') as any;
+        err.status = 403;
+        throw err;
       }
 
       const isPasswordValid = bcrypt.compareSync(password, user.password);
       if (!isPasswordValid) {
-        throw new Error('Invalid credentials');
+        const err = new Error('Invalid credentials') as any;
+        err.status = 401;
+        throw err;
       }
 
       const token = jwt.sign(
