@@ -33,3 +33,10 @@ export const updateCardStatusSchema = z.object({
     status: z.enum(['ACTIVE', 'SUSPENDED'])
   })
 });
+
+export const issueCardSchema = z.object({
+  body: z.object({
+    cardId: z.string().min(1, 'Card ID is required'),
+    userId: z.string().uuid('Invalid user ID format')
+  })
+});
