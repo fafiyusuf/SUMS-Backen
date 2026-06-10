@@ -26,7 +26,7 @@ export const config = {
     checkoutBaseUrl: process.env.TELEBIRR_CHECKOUT_BASE_URL || ''
   },
   cors: {
-    origin: (process.env.CORS_ORIGIN || 'http://localhost:8081,http://localhost:8080').split(',')
+    origin: (process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:3001').split(',')
   },
   redis: {
     host: process.env.REDIS_HOST || 'localhost',

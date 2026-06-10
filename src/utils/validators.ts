@@ -12,8 +12,8 @@ export const validateRegister = [
     .notEmpty().withMessage('Full name is required')
     .trim().escape(),
   body('phone')
-    .notEmpty().withMessage('Phone number is required')
-    .isMobilePhone('any').withMessage('Please provide a valid phone number')
+    .optional({ checkFalsy: true })
+    .matches(/^\+?\d{7,15}$/).withMessage('Please provide a valid phone number')
 ];
 
 export const validateCreateDriver = [
@@ -24,9 +24,21 @@ export const validateCreateDriver = [
 ];
 
 export const validateLogin = [
+  // Require at least one identifier: email or phone
+  body().custom((_, { req }) => {
+    const { email, phone } = req.body;
+    if (!email && !phone) {
+      throw new Error('Either email or phone is required');
+    }
+    return true;
+  }),
+  body('email')
+    .optional()
+    .isEmail().withMessage('Please provide a valid email address')
+    .normalizeEmail(),
   body('phone')
-    .notEmpty().withMessage('Phone number is required')
-    .isMobilePhone('any').withMessage('Please provide a valid phone number'),
+    .optional()
+    .matches(/^\+?\d{7,15}$/).withMessage('Please provide a valid phone number'),
   body('password')
     .notEmpty().withMessage('Password is required')
     .escape()

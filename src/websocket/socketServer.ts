@@ -7,9 +7,10 @@ class SocketServer {
   initialize(server: HTTPServer): void {
     this.io = new SocketIOServer(server, {
       cors: {
-        origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+        origin: '*', // Allow all origins for development to ensure connectivity
         methods: ['GET', 'POST']
-      }
+      },
+      transports: ['websocket', 'polling']
     });
 
     this.setupConnectionHandlers();
@@ -21,9 +22,13 @@ class SocketServer {
     this.io.on('connection', (socket: Socket) => {
       console.log(`Client connected: ${socket.id}`);
 
-      // GPS events
+      // GPS updates (standardizing on bus:location_update)
+      socket.on('bus:location_update', (data) => {
+        this.io?.emit('bus:location_update', data);
+      });
+
       socket.on('gps:update', (data) => {
-        socket.broadcast.emit('gps:updated', data);
+        this.io?.emit('bus:location_update', data);
       });
 
       // ETA events
