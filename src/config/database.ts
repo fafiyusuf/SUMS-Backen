@@ -25,10 +25,10 @@ const sequelizeConfig: Options = {
   dialect: 'postgres',
   logging: config.env === 'development' ? console.log : false,
   dialectOptions: {
-    ssl: {
+    ssl: shouldUseSsl ? {
       require: true,
       rejectUnauthorized: false
-    },
+    } : false,
     connectTimeout: 10000 // 🔥 ADD THIS (10 seconds)
   },
   pool: {

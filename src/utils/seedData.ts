@@ -1,4 +1,4 @@
-import { Bus, Route, User, RoutePathCoordinate } from '../models';
+import { Bus, Route, User, RoutePathCoordinate } from '../modules/models';
 import bcrypt from 'bcryptjs';
 
 export const seedAdamaData = async () => {

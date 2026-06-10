@@ -1,10 +1,11 @@
 import express, { NextFunction, Request, Response } from 'express';
-import { AuthRequest } from '../middleware/authMiddleware';
-import authController from '../controllers/authController';
-import verifyToken from '../middleware/authMiddleware';
-import { authLimiter } from '../middleware/rateLimiter';
-import requireRole from '../middleware/roleMiddleware';
-import { handleValidationErrors, validateLogin, validateRegister, validateCreateDriver } from '../utils/validators';
+import { AuthRequest } from '../../middleware/authMiddleware';
+import authController from './auth.controller';
+import verifyToken from '../../middleware/authMiddleware';
+import { authLimiter } from '../../middleware/rateLimiter';
+import requireRole from '../../middleware/roleMiddleware';
+import { validate } from '../../middleware/validate';
+import { registerSchema, loginSchema, createDriverSchema } from './auth.schema';
 
 const router = express.Router();
 
@@ -86,7 +87,7 @@ router.post('/register', authLimiter, validate(registerSchema), (req: Request, r
  *       403:
  *         description: Forbidden (Admin role required)
  */
-router.post('/create-driver', verifyToken, requireRole('admin'), authLimiter, validateCreateDriver, handleValidationErrors, (req: AuthRequest, res: Response, next: NextFunction) =>
+router.post('/create-driver', verifyToken, requireRole('admin'), authLimiter, validate(createDriverSchema), (req: AuthRequest, res: Response, next: NextFunction) =>
   authController.createDriver(req, res, next)
 );
 

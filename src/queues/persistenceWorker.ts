@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq';
 import Redis from 'ioredis';
 import config from '../config/env';
-import GPSCoordinate from '../models/GPSCoordinate';
+import { GPSCoordinate } from '../modules/models';
 import { LocationData } from '../types/LocationProvider';
 
 const connectionOptions = {

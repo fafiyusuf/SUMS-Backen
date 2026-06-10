@@ -10,6 +10,7 @@ export { Trip } from '../trip/trip.model';
 export { User } from '../user/user.model';
 export { Transaction } from '../wallet/transaction.model';
 export { Wallet } from '../wallet/wallet.model';
+export { RoutePathCoordinate } from '../wallet/RoutePathCoordinate';
 
 // Import models for associations
 import { Bus } from '../bus/bus.model';
