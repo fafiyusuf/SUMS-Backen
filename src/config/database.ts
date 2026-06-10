@@ -24,14 +24,13 @@ const shouldUseSsl =
 const sequelizeConfig: Options = {
   dialect: 'postgres',
   logging: config.env === 'development' ? console.log : false,
-  dialectOptions: shouldUseSsl
-    ? {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false
-        }
-      }
-    : undefined,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    },
+    connectTimeout: 10000 // 🔥 ADD THIS (10 seconds)
+  },
   pool: {
     max: 5,
     min: 0,
@@ -43,7 +42,6 @@ const sequelizeConfig: Options = {
     underscored: true
   }
 };
-
 export const sequelize = new Sequelize(config.databaseUrl, sequelizeConfig);
 
 export default sequelizeConfig;

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { Bus } from '../bus/bus.model';
 import { Route } from '../route/route.model';
 import { Trip } from './trip.model';
+import tripService from './trip.service';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -273,6 +274,26 @@ export class TripController {
       res.status(200).json({ success: true, message: 'All trips retrieved', data: { trips, total, page, limit } });
     } catch (error) {
       next(error);
+    }
+  }
+
+  // --- Simulation Methods ---
+
+  async simulateTapIn(req: Request, res: Response): Promise<void> {
+    try {
+      const trip = await tripService.simulateTapIn(req.body);
+      res.status(201).json({ success: true, message: 'Tap In successful', data: trip });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async simulateTapOut(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await tripService.simulateTapOut(req.body);
+      res.status(200).json({ success: true, message: 'Tap Out successful', data: result });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 }
