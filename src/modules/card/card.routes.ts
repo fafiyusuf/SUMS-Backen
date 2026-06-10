@@ -8,7 +8,8 @@ import {
     cardIdParamSchema,
     linkTelebirrSchema,
     listCardsSchema,
-    updateCardStatusSchema
+    updateCardStatusSchema,
+    issueCardSchema
 } from './card.schema';
 
 const router = express.Router();
@@ -120,6 +121,7 @@ router.put('/link-telebirr', verifyToken, requireRole('passenger'), validate(lin
  */
 
 router.get('/', verifyToken, requireRole('admin'), validate(listCardsSchema), cardController.list);
+router.post('/', verifyToken, requireRole('admin'), validate(issueCardSchema), cardController.issue);
 
 /**
  * @swagger

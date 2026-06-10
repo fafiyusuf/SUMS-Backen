@@ -7,7 +7,8 @@ import {
     getAllUsersSchema,
     getUserSchema,
     updateProfileSchema,
-    updateUserStatusSchema
+    updateUserStatusSchema,
+    updateUserSchema
 } from './user.schema';
 
 const router = express.Router();
@@ -156,5 +157,6 @@ router.get('/:id', validate(getUserSchema), userController.getUser);
  *         description: User not found
  */
 router.put('/:id/status', validate(updateUserStatusSchema), userController.updateUserStatus);
+router.put('/:id', validate(updateUserSchema), userController.updateUser);
 
 export default router;

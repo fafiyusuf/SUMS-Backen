@@ -35,10 +35,10 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - plateNumber
+ *               - registrationNumber
  *               - capacity
  *             properties:
- *               plateNumber:
+ *               registrationNumber:
  *                 type: string
  *               capacity:
  *                 type: integer
@@ -136,7 +136,7 @@ router.get('/:id', validate(getBusSchema), busController.getBus);
  *           schema:
  *             type: object
  *             properties:
- *               plateNumber:
+ *               registrationNumber:
  *                 type: string
  *               capacity:
  *                 type: integer

@@ -1,21 +1,21 @@
-import telebirrService from '../../../src/services/walletTelebirrService';
+import telebirrService from '../../../src/modules/telebirr/telebirr.service';
 
-jest.mock('../../../src/models', () => ({
+jest.mock('../../../src/modules/wallet/transaction.model', () => ({
   Transaction: {
     findOne: jest.fn(),
     create: jest.fn()
   }
 }));
 
-jest.mock('../../../src/services/walletService', () => ({
+jest.mock('../../../src/modules/wallet/wallet.service', () => ({
   __esModule: true,
   default: {
     addBalance: jest.fn()
   }
 }));
 
-import { Transaction } from '../../../src/models';
-import walletService from '../../../src/services/walletService';
+import { Transaction } from '../../../src/modules/wallet/transaction.model';
+import walletService from '../../../src/modules/wallet/wallet.service';
 
 describe('TelebirrService', () => {
   beforeEach(() => {
@@ -54,7 +54,7 @@ describe('TelebirrService', () => {
       expect(Transaction.findOne).toHaveBeenCalledWith({ where: { outTradeNo: 'X2' } });
       expect(mockTransaction.get).toHaveBeenCalledWith('status');
       expect(mockTransaction.update).toHaveBeenCalledWith({ status: 'completed' });
-      expect((walletService as any).addBalance).toHaveBeenCalledWith('user-123', 42.5);
+      expect((walletService as any).addBalance).toHaveBeenCalledWith('user-123', 42.5, { logTransaction: false });
     });
   });
 

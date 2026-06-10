@@ -87,6 +87,20 @@ class CardController {
       next(error);
     }
   }
+
+  async issue(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { cardId, userId } = req.body;
+      const card = await cardService.issueCard(cardId, userId);
+      res.status(201).json({ success: true, message: 'Card issued successfully', data: card });
+    } catch (error: any) {
+      if (error && error.status) {
+         res.status(error.status).json({ success: false, message: error.message });
+         return;
+      }
+      next(error);
+    }
+  }
 }
 
 export default new CardController();

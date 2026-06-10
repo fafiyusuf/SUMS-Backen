@@ -28,3 +28,20 @@ export const getStopSchema = z.object({
     id: z.string().uuid('Invalid Stop ID format')
   })
 });
+
+export const deleteStopSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid Stop ID format')
+  })
+});
+
+export const updateStopSequenceSchema = z.object({
+  body: z.object({
+    sequence: z.array(
+      z.object({
+        id: z.string().uuid('Invalid Stop ID format'),
+        sequenceNumber: z.number().int().min(1)
+      })
+    )
+  })
+});

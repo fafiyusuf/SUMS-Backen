@@ -5,8 +5,10 @@ import validate from '../../middleware/validate';
 import stopController from './stop.controller';
 import {
     createStopSchema,
+    deleteStopSchema,
     getStopSchema,
-    updateStopSchema
+    updateStopSchema,
+    updateStopSequenceSchema
 } from './stop.schema';
 
 const router = express.Router();
@@ -137,6 +139,8 @@ router.post('/', verifyToken, requireRole('admin'), validate(createStopSchema), 
  *       404:
  *         description: Stop not found
  */
+router.put('/sequence', verifyToken, requireRole('admin'), validate(updateStopSequenceSchema), stopController.updateStopSequence);
 router.put('/:id', verifyToken, requireRole('admin'), validate(updateStopSchema), stopController.updateStop);
+router.delete('/:id', verifyToken, requireRole('admin'), validate(deleteStopSchema), stopController.deleteStop);
 
 export default router;

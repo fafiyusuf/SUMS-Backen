@@ -180,23 +180,7 @@ router.post('/login/admin', authLimiter, validate(loginSchema), (req: Request, r
   authController.loginAdmin(req, res, next)
 );
 
-/**
- * @swagger
- * /auth/refresh-token:
- *   post:
- *     summary: Refresh authorization token
- *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Token refreshed
- *       401:
- *         description: Unauthorized
- */
-router.post('/refresh-token', verifyToken, (req: AuthRequest, res: Response, next: NextFunction) =>
-  authController.refreshToken(req, res, next)
-);
+
 
 /**
  * @swagger

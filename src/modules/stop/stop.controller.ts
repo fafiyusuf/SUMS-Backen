@@ -47,6 +47,29 @@ export class StopController {
       next(error);
     }
   }
+
+  async deleteStop(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      await stopService.deleteStop(id);
+      res.status(200).json({ success: true, message: 'Stop deleted successfully' });
+    } catch (error: any) {
+      if (error.message === 'Stop not found') {
+        res.status(404).json({ success: false, message: error.message });
+        return;
+      }
+      next(error);
+    }
+  }
+
+  async updateStopSequence(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      await stopService.updateStopSequence(req.body.sequence);
+      res.status(200).json({ success: true, message: 'Stops sequence updated successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new StopController();

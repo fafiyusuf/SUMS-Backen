@@ -1,12 +1,12 @@
 import request from 'supertest';
 import app from '../../../src/app';
 
-jest.mock('../../../src/services/walletTelebirrService', () => ({
+jest.mock('../../../src/modules/telebirr/telebirr.service', () => ({
   processWebhook: jest.fn(),
   createWalletTopup: jest.fn()
 }));
 
-import telebirrService from '../../../src/services/walletTelebirrService';
+import telebirrService from '../../../src/modules/telebirr/telebirr.service';
 
 describe('Telebirr Routes Integration', () => {
   beforeEach(() => {
@@ -18,7 +18,7 @@ describe('Telebirr Routes Integration', () => {
     const payload = { outTradeNo: 'T1', status: 'SUCCESS', amount: 10 };
 
     const res = await request(app)
-      .post('/api/v1/wallet/telebirr/webhook')
+      .post('/api/v1/wallet/webhook/telebirr')
       .send(payload)
       .set('Content-Type', 'application/json');
 
@@ -32,7 +32,7 @@ describe('Telebirr Routes Integration', () => {
     const signature = require('crypto').createHmac('sha256', process.env.TELEBIRR_WEBHOOK_SECRET).update(JSON.stringify(payload)).digest('hex');
 
     const res = await request(app)
-      .post('/api/v1/wallet/telebirr/webhook')
+      .post('/api/v1/wallet/webhook/telebirr')
       .send(payload)
       .set('Content-Type', 'application/json')
       .set('x-telebirr-signature', signature);

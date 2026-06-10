@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const createBusSchema = z.object({
   body: z.object({
-    plateNumber: z.string().min(1, 'Plate number is required'),
+    registrationNumber: z.string().min(1, 'Registration number is required'),
     capacity: z.number().int().min(1, 'Capacity must be at least 1'),
     make: z.string().optional(),
     model: z.string().optional(),
@@ -18,7 +18,7 @@ export const updateBusSchema = z.object({
     id: z.string().uuid('Invalid Bus ID format')
   }),
   body: z.object({
-    plateNumber: z.string().min(1).optional(),
+    registrationNumber: z.string().min(1).optional(),
     capacity: z.number().int().min(1).optional(),
     make: z.string().optional(),
     model: z.string().optional(),

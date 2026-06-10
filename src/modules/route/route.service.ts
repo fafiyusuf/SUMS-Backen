@@ -1,4 +1,5 @@
 import { Route } from './route.model';
+import { sequelize } from '../../config/database';
 
 export class RouteService {
   async createRoute(routeData: any) {
@@ -33,8 +34,38 @@ export class RouteService {
   async deleteRoute(routeId: string) {
     const route = await Route.findByPk(routeId);
     if (!route) throw new Error('Route not found');
-    await route.destroy();
-    return true;
+
+    const transaction = await sequelize.transaction();
+    try {
+      const { Stop } = require('../stop/stop.model');
+      const { Trip } = require('../trip/trip.model');
+      const { Schedule } = require('../schedule/schedule.model');
+      const { Bus } = require('../bus/bus.model');
+      const { GPSCoordinate } = require('../gps/gps.model');
+      const { Incident } = require('../incident/incident.model');
+
+      const buses = await Bus.findAll({ where: { routeId }, transaction });
+      const busIds = buses.map((b: any) => b.id);
+
+      if (busIds.length > 0) {
+        await Trip.destroy({ where: { busId: busIds }, transaction });
+        await GPSCoordinate.destroy({ where: { busId: busIds }, transaction });
+        await Incident.destroy({ where: { busId: busIds }, transaction });
+        await Schedule.destroy({ where: { busId: busIds }, transaction });
+        await Bus.destroy({ where: { routeId }, transaction });
+      }
+
+      await Stop.destroy({ where: { routeId }, transaction });
+      await Trip.destroy({ where: { routeId }, transaction });
+      await Schedule.destroy({ where: { routeId }, transaction });
+
+      await route.destroy({ transaction });
+      await transaction.commit();
+      return true;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   }
 }
 
