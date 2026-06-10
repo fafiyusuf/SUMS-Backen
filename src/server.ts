@@ -6,7 +6,10 @@ import config from './config/env';
 import { initializeAssociations } from './database/connection';
 import logger from './utils/logger';
 import socketServer from './websocket/socketServer';
-
+import './queues/persistenceWorker'; // Start persistence worker
+import { seedAdamaData } from './utils/seedData';
+import dns from "dns";
+dns.setDefaultResultOrder("ipv4first");
 const PORT = config.port || 3000;
 
 async function startServer() {
@@ -14,15 +17,26 @@ async function startServer() {
     // Initialize database associations
     initializeAssociations();
 
+    // Seed Adama Data
+    await seedAdamaData();
+
+    // Import and start LocationService AFTER seeding
+    await import('./services/LocationService');
+    console.log('LocationService initialized after seeding');
+
     // Test database connection
     await sequelize.authenticate();
     logger.info('Database connection established successfully');
 
+    // Sync database (Create missing tables)
+    await sequelize.sync({ alter: true });
+    logger.info('Database synchronized');
+
     // Sync database (use { alter: true } in development, migrations in production)
-   /* if (config.env === 'development') {
-      await sequelize.sync({ alter: true });
-      logger.info('Database synchronized');
-    }*/
+    /* if (config.env === 'development') {
+       await sequelize.sync({ alter: true });
+       logger.info('Database synchronized');
+     }*/
 
     // Create HTTP server
     const server = http.createServer(app);

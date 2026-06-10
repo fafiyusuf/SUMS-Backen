@@ -6,9 +6,10 @@ import Transaction from './Transaction';
 import Trip from './Trip';
 import User from './User';
 import Wallet from './Wallet';
+import RoutePathCoordinate from './RoutePathCoordinate';
 
 // Export all models
-export { Bus, Route, SmartCard, Stop, Transaction, Trip, User, Wallet };
+export { Bus, Route, SmartCard, Stop, Transaction, Trip, User, Wallet, RoutePathCoordinate };
 
 // --- Define associations ---
 
@@ -27,6 +28,10 @@ Transaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 // Route & Stop (1:N)
 Route.hasMany(Stop, { foreignKey: 'routeId', as: 'stops' });
 Stop.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
+
+// Route & RoutePathCoordinate (1:N)
+Route.hasMany(RoutePathCoordinate, { foreignKey: 'routeId', as: 'pathCoordinates' });
+RoutePathCoordinate.belongsTo(Route, { foreignKey: 'routeId', as: 'route' });
 
 // Route & Bus (1:N)
 Route.hasMany(Bus, { foreignKey: 'routeId', as: 'buses' });

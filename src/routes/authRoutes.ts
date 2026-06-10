@@ -1,4 +1,5 @@
 import express, { NextFunction, Request, Response } from 'express';
+import { AuthRequest } from '../middleware/authMiddleware';
 import authController from '../controllers/authController';
 import verifyToken from '../middleware/authMiddleware';
 import { authLimiter } from '../middleware/rateLimiter';
@@ -73,7 +74,7 @@ router.post('/register', authLimiter, validateRegister, handleValidationErrors, 
  *       403:
  *         description: Access denied. Insufficient permissions
  */
-router.post('/create-driver', verifyToken, requireRole('admin'), authLimiter, validateCreateDriver, handleValidationErrors, (req: Request, res: Response, next: NextFunction) =>
+router.post('/create-driver', verifyToken, requireRole('admin'), authLimiter, validateCreateDriver, handleValidationErrors, (req: AuthRequest, res: Response, next: NextFunction) =>
   authController.createDriver(req, res, next)
 );
 
@@ -167,7 +168,7 @@ router.post('/login/admin', authLimiter, validateLogin, handleValidationErrors, 
  *       200:
  *         description: Token refreshed
  */
-router.post('/refresh-token', verifyToken, (req: Request, res: Response, next: NextFunction) =>
+router.post('/refresh-token', verifyToken, (req: AuthRequest, res: Response, next: NextFunction) =>
   authController.refreshToken(req, res, next)
 );
 
@@ -183,7 +184,7 @@ router.post('/refresh-token', verifyToken, (req: Request, res: Response, next: N
  *       200:
  *         description: Logout successful
  */
-router.post('/logout', verifyToken, (req: Request, res: Response, next: NextFunction) =>
+router.post('/logout', verifyToken, (req: AuthRequest, res: Response, next: NextFunction) =>
   authController.logout(req, res, next)
 );
 

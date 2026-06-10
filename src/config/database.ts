@@ -12,7 +12,8 @@ const sequelizeConfig: Options = {
     ssl: {
       require: true,
       rejectUnauthorized: false
-    }
+    },
+    connectTimeout: 10000 // 🔥 ADD THIS (10 seconds)
   },
   pool: {
     max: 5,
@@ -25,7 +26,6 @@ const sequelizeConfig: Options = {
     underscored: true
   }
 };
-
 export const sequelize = new Sequelize(config.databaseUrl, sequelizeConfig);
 
 export default sequelizeConfig;

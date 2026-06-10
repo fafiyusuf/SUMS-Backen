@@ -9,7 +9,7 @@ export const limiter = rateLimit({
 
 export const authLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
+  max: 100, // Increased for development
   skipSuccessfulRequests: true,
   message: 'Too many login attempts, please try again later.',
   statusCode: 429

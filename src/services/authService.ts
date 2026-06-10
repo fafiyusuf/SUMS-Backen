@@ -21,7 +21,8 @@ export interface LoginResponse {
   token: string;
   user: {
     id: string;
-    email: string;
+    email?: string | null;
+    phone?: string | null;
     fullName: string;
     role: string;
   };
@@ -106,9 +107,17 @@ export class AuthService {
     }
   }
 
-  async loginUser(email: string, password: string, requiredRole: string): Promise<LoginResponse> {
+  async loginUser(identifier: string, password: string, requiredRole: string): Promise<LoginResponse> {
     try {
-      const user = await User.findOne({ where: { email } });
+      // Determine whether identifier is email or phone
+      const whereClause: any = {};
+      if (identifier.includes('@')) {
+        whereClause.email = identifier;
+      } else {
+        whereClause.phone = identifier;
+      }
+
+      const user = await User.findOne({ where: whereClause });
       if (!user) {
         throw new Error('Invalid credentials');
       }
@@ -133,13 +142,14 @@ export class AuthService {
         { expiresIn: config.jwt.expiresIn as any }
       );
 
-      logger.info(`User logged in: ${user.email} as ${user.role}`);
+      logger.info(`User logged in: ${user.email || user.phone} as ${user.role}`);
 
       return {
         token,
         user: {
           id: user.id,
           email: user.email,
+          phone: user.phone,
           fullName: user.fullName,
           role: user.role
         }
