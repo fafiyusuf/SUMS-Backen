@@ -77,6 +77,22 @@ router.get('/route', verifyToken, driverController.getAssignedRoute);
 
 /**
  * @swagger
+ * /driver/bus:
+ *   get:
+ *     summary: Get assigned bus for the driver
+ *     tags: [Driver]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Assigned bus details
+ *       404:
+ *         description: No bus assigned
+ */
+router.get('/bus', verifyToken, driverController.getAssignedBus);
+
+/**
+ * @swagger
  * /driver/trip/history:
  *   get:
  *     summary: Get past trips history for the driver

@@ -4,12 +4,11 @@ export const createBusSchema = z.object({
   body: z.object({
     registrationNumber: z.string().min(1, 'Registration number is required'),
     capacity: z.number().int().min(1, 'Capacity must be at least 1'),
-    make: z.string().optional(),
-    model: z.string().optional(),
-    year: z.number().int().optional(),
-    driverId: z.string().uuid().optional(),
-    routeId: z.string().uuid().optional(),
-    status: z.enum(['active', 'inactive', 'maintenance']).optional()
+    // driverId and routeId are optional at creation — a bus can be added to the fleet
+    // first and assigned to a driver/route separately.
+    driverId: z.string().uuid('Invalid Driver ID format').optional().nullable(),
+    routeId: z.string().uuid('Invalid Route ID format').optional().nullable(),
+    status: z.enum(['active', 'inactive', 'maintenance']).optional(),
   })
 });
 
@@ -20,11 +19,8 @@ export const updateBusSchema = z.object({
   body: z.object({
     registrationNumber: z.string().min(1).optional(),
     capacity: z.number().int().min(1).optional(),
-    make: z.string().optional(),
-    model: z.string().optional(),
-    year: z.number().int().optional(),
-    driverId: z.string().uuid().optional(),
-    routeId: z.string().uuid().optional(),
+    driverId: z.string().uuid('Invalid Driver ID format').optional().nullable(),
+    routeId: z.string().uuid('Invalid Route ID format').optional().nullable(),
     status: z.enum(['active', 'inactive', 'maintenance']).optional()
   })
 });

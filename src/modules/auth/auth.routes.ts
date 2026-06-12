@@ -1,11 +1,10 @@
 import express, { NextFunction, Request, Response } from 'express';
-import { AuthRequest } from '../../middleware/authMiddleware';
-import authController from './auth.controller';
-import verifyToken from '../../middleware/authMiddleware';
+import verifyToken, { AuthRequest } from '../../middleware/authMiddleware';
 import { authLimiter } from '../../middleware/rateLimiter';
 import requireRole from '../../middleware/roleMiddleware';
 import { validate } from '../../middleware/validate';
-import { registerSchema, loginSchema, createDriverSchema } from './auth.schema';
+import authController from './auth.controller';
+import { createDriverSchema, loginSchema, registerSchema } from './auth.schema';
 
 const router = express.Router();
 
@@ -181,6 +180,31 @@ router.post('/login/admin', authLimiter, validate(loginSchema), (req: Request, r
   authController.loginAdmin(req, res, next)
 );
 
+/**
+ * @swagger
+ * /auth/refresh-token:
+ *   post:
+ *     summary: Refresh access token using a refresh token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [refreshToken]
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *       401:
+ *         description: Invalid refresh token
+ */
+router.post('/refresh-token', (req: Request, res: Response, next: NextFunction) =>
+  authController.refreshToken(req, res, next)
+);
 
 
 /**

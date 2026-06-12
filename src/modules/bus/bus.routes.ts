@@ -40,28 +40,31 @@ const router = express.Router();
  *             properties:
  *               registrationNumber:
  *                 type: string
+ *                 description: Unique license plate number
  *               capacity:
  *                 type: integer
- *               make:
- *                 type: string
- *               model:
- *                 type: string
- *               year:
- *                 type: integer
+ *                 description: Maximum passenger capacity
  *               driverId:
  *                 type: string
  *                 format: uuid
+ *                 nullable: true
+ *                 description: Optional. ID of an existing user with role=driver. One driver per bus enforced.
  *               routeId:
  *                 type: string
  *                 format: uuid
+ *                 nullable: true
+ *                 description: Optional. ID of the route this bus will serve.
  *               status:
  *                 type: string
  *                 enum: [active, inactive, maintenance]
+ *                 default: inactive
  *     responses:
  *       201:
  *         description: Bus created successfully
  *       400:
- *         description: Validation error
+ *         description: Validation error or driver already assigned to another bus
+ *       404:
+ *         description: Driver or Route not found
  */
 
 router.post('/', verifyToken, requireRole('admin'), validate(createBusSchema), busController.createBus);

@@ -79,6 +79,20 @@ export class AuthController {
     }
   }
 
+  async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) {
+        res.status(400).json({ success: false, message: 'Refresh token is required' });
+        return;
+      }
+      const result = await authService.refreshToken(refreshToken);
+      res.status(200).json({ success: true, message: 'Token refreshed successfully', data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
 
 
   async logout(_req: AuthRequest, res: Response, next: NextFunction): Promise<void> {

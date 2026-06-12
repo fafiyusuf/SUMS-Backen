@@ -1,42 +1,228 @@
 import { Bus } from '../bus/bus.model';
 import { Route } from '../route/route.model';
+import { Stop } from '../stop/stop.model';
+import { Trip } from '../trip/trip.model';
 
 export class DriverService {
+  /**
+   * Start a driver's trip:
+   *  - Finds the bus assigned to the driver
+   *  - Ensures the bus has a route assigned
+   *  - Ensures no active trip is already in progress for this driver
+   *  - Sets bus status to 'active'
+   *  - Creates a Trip record (driver session trip — userId is null)
+   */
   async startTrip(driverId: string) {
     const bus = await Bus.findOne({ where: { driverId } });
-    if (!bus) throw new Error('No bus assigned to driver');
-    
-    await bus.update({ status: 'active' }); 
-    return { busId: bus.id, routeId: bus.routeId, status: 'active', startTime: new Date() };
+    if (!bus) {
+      const error: any = new Error('No bus assigned to driver');
+      error.status = 404;
+      throw error;
+    }
+
+    if (!bus.routeId) {
+      const error: any = new Error('Bus has no route assigned. Please assign a route before starting a trip.');
+      error.status = 400;
+      throw error;
+    }
+
+    if (bus.status === 'active') {
+      const error: any = new Error('A trip is already in progress. End the current trip before starting a new one.');
+      error.status = 400;
+      throw error;
+    }
+
+    // Find the first stop of the route to mark as starting point
+    const routeId: string = bus.routeId as string;
+    const firstStop = await Stop.findOne({
+      where: { routeId },
+      order: [['sequenceNumber', 'ASC']]
+    });
+
+    if (!firstStop) {
+      const error: any = new Error('No stops found for the assigned route.');
+      error.status = 400;
+      throw error;
+    }
+
+    await bus.update({ status: 'active' });
+
+    // Create a Trip record to represent this driver's session
+    const trip = await Trip.create({
+      userId: null, // Indicates a driver session/bus trip
+      busId: bus.id,
+      routeId: bus.routeId,
+      startStopId: firstStop.id,
+      startTime: new Date(),
+      fare: 0,
+      status: 'ongoing'
+    });
+
+    return {
+      id: trip.id,
+      busId: bus.id,
+      routeId: bus.routeId,
+      status: 'active',
+      startTime: trip.startTime
+    };
   }
 
+  /**
+   * End a driver's trip:
+   *  - Finds the bus assigned to the driver
+   *  - Ensures there IS an active trip
+   *  - Sets bus status back to 'inactive'
+   *  - Completes the Trip record
+   */
   async endTrip(driverId: string) {
     const bus = await Bus.findOne({ where: { driverId } });
-    if (!bus) throw new Error('No bus assigned to driver');
-    
-    await bus.update({ status: 'inactive' }); 
-    return { busId: bus.id, status: 'inactive', endTime: new Date() };
+    if (!bus) {
+      const error: any = new Error('No bus assigned to driver');
+      error.status = 404;
+      throw error;
+    }
+
+    if (bus.status !== 'active') {
+      const error: any = new Error('No active trip to end.');
+      error.status = 400;
+      throw error;
+    }
+
+    // Find the ongoing trip record for this bus
+    const trip = await Trip.findOne({
+      where: { busId: bus.id, status: 'ongoing', userId: null },
+      order: [['startTime', 'DESC']]
+    });
+
+    // Find the last stop of the route
+    const routeId: string = bus.routeId as string;
+    const lastStop = await Stop.findOne({
+      where: { routeId },
+      order: [['sequenceNumber', 'DESC']]
+    });
+
+    await bus.update({ status: 'inactive' });
+
+    if (trip) {
+      await trip.update({
+        status: 'completed',
+        endTime: new Date(),
+        endStopId: lastStop?.id || trip.startStopId
+      });
+    }
+
+    return {
+      busId: bus.id,
+      status: 'inactive',
+      endTime: trip?.endTime || new Date()
+    };
   }
 
+  /**
+   * Get currently active trip for the driver.
+   */
   async getCurrentTrip(driverId: string) {
     const bus = await Bus.findOne({ where: { driverId } });
-    if (!bus || bus.status !== 'active') throw new Error('No active trip');
+    if (!bus || bus.status !== 'active') {
+      const error: any = new Error('No active trip');
+      error.status = 404;
+      throw error;
+    }
 
-    return { busId: bus.id, routeId: bus.routeId, status: bus.status };
+    // Find the ongoing trip record
+    const trip = await Trip.findOne({
+      where: { busId: bus.id, status: 'ongoing', userId: null },
+      order: [['startTime', 'DESC']]
+    });
+
+    if (!trip) {
+      const error: any = new Error('No active trip session found');
+      error.status = 404;
+      throw error;
+    }
+
+    return {
+      id: trip.id,
+      busId: bus.id,
+      routeId: bus.routeId,
+      status: bus.status,
+      startTime: trip.startTime
+    };
   }
 
+  /**
+   * Get the route assigned to this driver's bus.
+   */
   async getAssignedRoute(driverId: string) {
     const bus = await Bus.findOne({ where: { driverId } });
-    if (!bus) throw new Error('No assignment found');
+    if (!bus) {
+      const error: any = new Error('No bus assigned to your account. Please contact admin.');
+      error.status = 404;
+      throw error;
+    }
+
+    if (!bus.routeId) {
+      const error: any = new Error('No route assigned to your bus yet.');
+      error.status = 404;
+      throw error;
+    }
 
     const route = await Route.findByPk(bus.routeId);
-    if (!route) throw new Error('Assigned route details not found');
+    if (!route) {
+      const error: any = new Error('Assigned route details not found');
+      error.status = 404;
+      throw error;
+    }
+
     return route;
   }
 
-  async getHistory(_driverId: string) {
-    // Return empty history for now as per original code
-    return [];
+  /**
+   * Get the bus assigned to this driver.
+   */
+  async getAssignedBus(driverId: string) {
+    const bus = await Bus.findOne({ where: { driverId } });
+    if (!bus) {
+      const error: any = new Error('No bus assigned to your account. Please contact admin.');
+      error.status = 404;
+      throw error;
+    }
+    return bus;
+  }
+
+  /**
+   * Get the driver's trip history (session trips on their assigned bus).
+   */
+  async getHistory(driverId: string, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+
+    const bus = await Bus.findOne({ where: { driverId } });
+    if (!bus) {
+      return { trips: [], total: 0, page, limit };
+    }
+
+    const trips = await Trip.findAll({
+      where: { busId: bus.id, userId: null },
+      include: [
+        { model: Bus, as: 'bus', attributes: ['registrationNumber', 'capacity'] },
+        { model: Route, as: 'route', attributes: ['name', 'startPoint', 'endPoint', 'distance', 'estimatedDuration'] }
+      ],
+      limit,
+      offset,
+      order: [['startTime', 'DESC']]
+    });
+
+    const total = await Trip.count({ where: { busId: bus.id, userId: null } });
+
+    const formattedTrips = trips.map((trip: any) => {
+      const tripData = trip.toJSON();
+      const hoursDriven = trip.endTime
+        ? (new Date(trip.endTime).getTime() - new Date(trip.startTime).getTime()) / (1000 * 60 * 60)
+        : undefined;
+      return { ...tripData, hoursDriven };
+    });
+
+    return { trips: formattedTrips, total, page, limit };
   }
 }
 

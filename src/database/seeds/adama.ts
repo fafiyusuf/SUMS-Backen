@@ -4,17 +4,17 @@ import { sequelize } from '../../config/database';
 import '../../modules/models';
 
 import {
-    Bus,
-    GPSCoordinate,
-    Incident,
-    Route,
-    Schedule,
-    SmartCard,
-    Stop,
-    Transaction,
-    Trip,
-    User,
-    Wallet
+  Bus,
+  GPSCoordinate,
+  Incident,
+  Route,
+  Schedule,
+  SmartCard,
+  Stop,
+  Transaction,
+  Trip,
+  User,
+  Wallet
 } from '../../modules/models';
 
 const PASSWORD_HASH_ADMIN123 =
@@ -84,7 +84,7 @@ async function seedAdama(): Promise<void> {
   await sequelize.authenticate();
 
   // Ensure all model-backed tables exist (the project uses sync+alter in development).
-  await sequelize.sync({ alter: true });
+  // await sequelize.sync({ alter: true });
 
   await truncateAll();
 
@@ -277,7 +277,7 @@ async function seedAdama(): Promise<void> {
       routeId: b.routeId,
       capacity: b.capacity,
       currentPassengers: 0,
-      status: 'active' as const
+      status: 'inactive' as const
     })),
     { validate: true, returning: true }
   );
@@ -344,11 +344,11 @@ async function seedAdama(): Promise<void> {
   const now = Date.now();
   const tripsToCreate: Array<{
     id: string;
-    userId: string;
+    userId: string | null;
     busId: string;
     routeId: string;
     startStopId: string;
-    endStopId: string;
+    endStopId: string | null;
     startTime: Date;
     endTime?: Date;
     fare: number;
@@ -463,6 +463,32 @@ async function seedAdama(): Promise<void> {
       status: 'ongoing'
     });
   }
+
+  // Add driver session trips (userId is null) for history testing
+  buses.forEach((bus, bIdx) => {
+    if (!bus.routeId) return;
+    const routePick = routesWithStops.find((r) => r.route.id === bus.routeId) || routesWithStops[0];
+    const startStop = routePick.stops[0];
+    const endStop = routePick.stops[routePick.stops.length - 1];
+
+    for (let j = 0; j < 3; j += 1) {
+      const startTime = new Date(now - (7 - j) * 24 * 60 * 60 * 1000 - bIdx * 2 * 60 * 60 * 1000);
+      const endTime = new Date(startTime.getTime() + (45 + bIdx * 5) * 60 * 1000);
+
+      tripsToCreate.push({
+        id: stableUuid(`trip:driver-session:${bus.id}:${j}`),
+        userId: null,
+        busId: bus.id,
+        routeId: bus.routeId,
+        startStopId: startStop.id,
+        endStopId: endStop.id,
+        startTime,
+        endTime,
+        fare: 0,
+        status: 'completed'
+      });
+    }
+  });
 
   await Trip.bulkCreate(tripsToCreate, { validate: true });
   await Transaction.bulkCreate(txToCreate, { validate: true });

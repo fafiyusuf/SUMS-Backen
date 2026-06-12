@@ -27,7 +27,12 @@ export class TripController {
   async getTrip(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const trip = await Trip.findByPk(id);
+      const trip = await Trip.findByPk(id, {
+        include: [
+          { model: Bus, as: 'bus', attributes: ['registrationNumber', 'capacity'] },
+          { model: Route, as: 'route', attributes: ['name', 'startPoint', 'endPoint', 'distance', 'estimatedDuration'] }
+        ]
+      });
       if (!trip) {
         res.status(404).json({ success: false, message: 'Trip not found' });
         return;
@@ -115,8 +120,8 @@ export class TripController {
         res.status(404).json({ success: false, message: 'No bus assigned to driver.' });
         return;
       }
-      await bus.update({ status: 'active' }); 
-      
+      await bus.update({ status: 'active' });
+
       res.status(200).json({
         success: true,
         message: 'Driver trip started',
@@ -139,8 +144,8 @@ export class TripController {
         res.status(404).json({ success: false, message: 'No bus assigned to driver.' });
         return;
       }
-      await bus.update({ status: 'inactive' }); 
-      
+      await bus.update({ status: 'inactive' });
+
       res.status(200).json({
         success: true,
         message: 'Driver trip ended',
@@ -159,7 +164,7 @@ export class TripController {
         return;
       }
       const bus = await Bus.findOne({ where: { driverId } });
-      
+
       if (!bus || bus.status !== 'active') {
         res.status(404).json({ success: false, message: 'No active trip.' });
         return;
@@ -185,6 +190,11 @@ export class TripController {
       const bus = await Bus.findOne({ where: { driverId } });
       if (!bus) {
         res.status(404).json({ success: false, message: 'No assignment found' });
+        return;
+      }
+
+      if (!bus.routeId) {
+        res.status(404).json({ success: false, message: 'No route assigned to your bus yet.' });
         return;
       }
 
