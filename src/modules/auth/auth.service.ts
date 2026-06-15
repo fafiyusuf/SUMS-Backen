@@ -21,6 +21,7 @@ export interface RegisterDriverData extends RegisterUserData {
 
 export interface LoginResponse {
   token: string;
+  refreshToken: string;
   user: {
     id: string;
     phone: string;
@@ -166,10 +167,17 @@ export class AuthService {
         { expiresIn: config.jwt.expiresIn as any }
       );
 
+      const refreshToken = jwt.sign(
+        { userId: user.id },
+        config.jwt.refreshSecret,
+        { expiresIn: config.jwt.refreshExpiresIn as any }
+      );
+
       logger.info(`User logged in: ${user.phone} as ${user.role}`);
 
       return {
         token,
+        refreshToken,
         user: {
           id: user.id,
           phone: user.phone,
@@ -189,6 +197,37 @@ export class AuthService {
       return jwt.verify(token, config.jwt.secret);
     } catch (error) {
       throw new Error('Invalid token');
+    }
+  }
+
+  async refreshToken(token: string): Promise<{ token: string; refreshToken: string }> {
+    try {
+      const decoded = jwt.verify(token, config.jwt.refreshSecret) as any;
+      const user = await User.findByPk(decoded.userId);
+
+      if (!user || user.status !== 'active') {
+        const err = new Error('User not found or inactive') as any;
+        err.status = 401;
+        throw err;
+      }
+
+      const newToken = jwt.sign(
+        { userId: user.id, role: user.role, phone: user.phone || null },
+        config.jwt.secret,
+        { expiresIn: config.jwt.expiresIn as any }
+      );
+
+      const newRefreshToken = jwt.sign(
+        { userId: user.id },
+        config.jwt.refreshSecret,
+        { expiresIn: config.jwt.refreshExpiresIn as any }
+      );
+
+      return { token: newToken, refreshToken: newRefreshToken };
+    } catch (error) {
+      const err = new Error('Invalid refresh token') as any;
+      err.status = 401;
+      throw err;
     }
   }
 

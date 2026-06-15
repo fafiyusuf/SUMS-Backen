@@ -11,6 +11,16 @@ export class StopController {
     }
   }
 
+  async getStopsByRoute(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { routeId } = req.params;
+      const stops = await stopService.getStopsByRoute(routeId);
+      res.status(200).json({ success: true, message: 'Stops for route retrieved', data: stops });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getStop(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
@@ -67,6 +77,20 @@ export class StopController {
       await stopService.updateStopSequence(req.body.sequence);
       res.status(200).json({ success: true, message: 'Stops sequence updated successfully' });
     } catch (error) {
+      next(error);
+    }
+  }
+
+  async getStopETA(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const etas = await stopService.getStopETA(id);
+      res.status(200).json({ success: true, message: 'Stop ETA retrieved', data: etas });
+    } catch (error: any) {
+      if (error.message === 'Stop not found') {
+        res.status(404).json({ success: false, message: error.message });
+        return;
+      }
       next(error);
     }
   }

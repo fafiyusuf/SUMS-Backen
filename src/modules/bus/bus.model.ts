@@ -9,8 +9,6 @@ import { sequelize } from '../../config/database';
  *       type: object
  *       required:
  *         - registrationNumber
- *         - driverId
- *         - routeId
  *         - capacity
  *       properties:
  *         id:
@@ -22,9 +20,13 @@ import { sequelize } from '../../config/database';
  *         driverId:
  *           type: string
  *           format: uuid
+ *           nullable: true
+ *           description: The driver currently assigned to this bus (one bus = one driver)
  *         routeId:
  *           type: string
  *           format: uuid
+ *           nullable: true
+ *           description: The route this bus is currently assigned to
  *         capacity:
  *           type: integer
  *         currentPassengers:
@@ -33,7 +35,7 @@ import { sequelize } from '../../config/database';
  *         status:
  *           type: string
  *           enum: [active, inactive, maintenance]
- *           default: active
+ *           default: inactive
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -44,8 +46,8 @@ import { sequelize } from '../../config/database';
 export interface BusAttributes {
   id: string;
   registrationNumber: string;
-  driverId: string;
-  routeId: string;
+  driverId: string | null;
+  routeId: string | null;
   capacity: number;
   currentPassengers: number;
   status: 'active' | 'inactive' | 'maintenance';
@@ -58,8 +60,8 @@ export interface BusCreationAttributes extends Optional<BusAttributes, 'id'> { }
 export class Bus extends Model<BusAttributes, BusCreationAttributes> implements BusAttributes {
   public id!: string;
   public registrationNumber!: string;
-  public driverId!: string;
-  public routeId!: string;
+  public driverId!: string | null;
+  public routeId!: string | null;
   public capacity!: number;
   public currentPassengers!: number;
   public status!: 'active' | 'inactive' | 'maintenance';
@@ -82,7 +84,10 @@ Bus.init(
     },
     driverId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      // UNIQUE enforces one-driver-per-bus at the DB level.
+      // allowNull: true means a bus can exist without a driver assigned yet.
+      unique: true,
+      allowNull: true,
       references: {
         model: 'users',
         key: 'id'
@@ -90,7 +95,11 @@ Bus.init(
     },
     routeId: {
       type: DataTypes.UUID,
-      allowNull: false
+      allowNull: true,
+      references: {
+        model: 'routes',
+        key: 'id'
+      }
     },
     capacity: {
       type: DataTypes.INTEGER,
@@ -102,7 +111,7 @@ Bus.init(
     },
     status: {
       type: DataTypes.ENUM('active', 'inactive', 'maintenance'),
-      defaultValue: 'active'
+      defaultValue: 'inactive'
     }
   },
   {

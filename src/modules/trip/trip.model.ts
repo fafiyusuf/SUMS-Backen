@@ -3,11 +3,11 @@ import { sequelize } from '../../config/database';
 
 export interface TripAttributes {
   id: string;
-  userId: string;
+  userId: string | null;   // null for driver-initiated trips; set for passenger trips
   busId: string;
   routeId: string;
   startStopId: string;
-  endStopId?: string | null;
+  endStopId?: string | null; // null until passenger taps out / trip is completed
   startTime: Date;
   endTime?: Date | null;
   fare: number;
@@ -16,11 +16,11 @@ export interface TripAttributes {
   updatedAt?: Date;
 }
 
-export interface TripCreationAttributes extends Optional<TripAttributes, 'id'> {}
+export interface TripCreationAttributes extends Optional<TripAttributes, 'id'> { }
 
 export class Trip extends Model<TripAttributes, TripCreationAttributes> implements TripAttributes {
   public id!: string;
-  public userId!: string;
+  public userId!: string | null;
   public busId!: string;
   public routeId!: string;
   public startStopId!: string;
@@ -43,7 +43,7 @@ Trip.init(
     },
     userId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,  // null for driver-service trips; set for passenger tap-in trips
       references: {
         model: 'users',
         key: 'id'
@@ -75,7 +75,7 @@ Trip.init(
     },
     endStopId: {
       type: DataTypes.UUID,
-      allowNull: true,
+      allowNull: true,  // null until passenger taps out or trip is completed
       references: {
         model: 'stops',
         key: 'id'

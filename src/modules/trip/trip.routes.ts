@@ -10,7 +10,9 @@ import {
     getAllTripsSchema,
     getPassengerHistorySchema,
     getTripSchema,
-    getUserTripsSchema
+    getUserTripsSchema,
+    simulateTapInSchema,
+    simulateTapOutSchema
 } from './trip.schema';
 
 const router = express.Router();
@@ -246,5 +248,85 @@ router.put('/:id/cancel', verifyToken, validate(cancelTripSchema), tripControlle
  */
 
 router.get('/', verifyToken, requireRole('admin'), validate(getAllTripsSchema), tripController.getAllTrips);
+
+// --- Simulator Endpoints ---
+/**
+ * @swagger
+ * /trips/simulate/tap-in:
+ *   post:
+ *     summary: Simulate Tap In (create ongoing trip)
+ *     tags: [Trips]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - cardId
+ *               - busId
+ *               - routeId
+ *               - startStopId
+ *             properties:
+ *               cardId:
+ *                 type: string
+ *                 description: Smart card identifier (SmartCard.cardId)
+ *               busId:
+ *                 type: string
+ *                 format: uuid
+ *               routeId:
+ *                 type: string
+ *                 format: uuid
+ *               startStopId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Tap In successful (ongoing trip created)
+ *       400:
+ *         description: Validation or business rule failure
+ */
+router.post('/simulate/tap-in', validate(simulateTapInSchema), tripController.simulateTapIn);
+
+/**
+ * @swagger
+ * /trips/simulate/tap-out:
+ *   post:
+ *     summary: Simulate Tap Out (complete trip and deduct fare)
+ *     tags: [Trips]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - cardId
+ *               - busId
+ *               - routeId
+ *               - endStopId
+ *             properties:
+ *               cardId:
+ *                 type: string
+ *                 description: Smart card identifier (SmartCard.cardId)
+ *               busId:
+ *                 type: string
+ *                 format: uuid
+ *               routeId:
+ *                 type: string
+ *                 format: uuid
+ *               endStopId:
+ *                 type: string
+ *                 format: uuid
+ *               fare:
+ *                 type: number
+ *                 description: Optional fare to charge (defaults to 15)
+ *     responses:
+ *       200:
+ *         description: Tap Out successful (trip completed)
+ *       400:
+ *         description: Validation or business rule failure
+ */
+router.post('/simulate/tap-out', validate(simulateTapOutSchema), tripController.simulateTapOut);
 
 export default router;

@@ -7,13 +7,13 @@ export interface IncidentAttributes {
   type: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
-  reportedBy: string;
+  reportedBy: string | null;
   status: 'open' | 'acknowledged' | 'resolved';
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export interface IncidentCreationAttributes extends Optional<IncidentAttributes, 'id'> {}
+export interface IncidentCreationAttributes extends Optional<IncidentAttributes, 'id'> { }
 
 export class Incident extends Model<IncidentAttributes, IncidentCreationAttributes> implements IncidentAttributes {
   public id!: string;
@@ -21,7 +21,7 @@ export class Incident extends Model<IncidentAttributes, IncidentCreationAttribut
   public type!: string;
   public severity!: 'low' | 'medium' | 'high' | 'critical';
   public description!: string;
-  public reportedBy!: string;
+  public reportedBy!: string | null;
   public status!: 'open' | 'acknowledged' | 'resolved';
 
   public readonly createdAt!: Date;
@@ -57,7 +57,7 @@ Incident.init(
     },
     reportedBy: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,  // null when reported anonymously or by system
       references: {
         model: 'users',
         key: 'id'

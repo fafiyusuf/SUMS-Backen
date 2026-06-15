@@ -34,6 +34,7 @@ const router = express.Router();
  */
 
 router.get('/', verifyToken, stopController.getAllStops);
+router.get('/route/:routeId', verifyToken, stopController.getStopsByRoute);
 
 /**
  * @swagger
@@ -58,6 +59,7 @@ router.get('/', verifyToken, stopController.getAllStops);
  *         description: Stop not found
  */
 router.get('/:id', verifyToken, validate(getStopSchema), stopController.getStop);
+router.get('/:id/eta', verifyToken, validate(getStopSchema), stopController.getStopETA);
 
 /**
  * @swagger

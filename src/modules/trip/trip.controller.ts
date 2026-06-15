@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { Bus } from '../bus/bus.model';
 import { Route } from '../route/route.model';
 import { Trip } from './trip.model';
+import tripService from './trip.service';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -26,7 +27,12 @@ export class TripController {
   async getTrip(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const trip = await Trip.findByPk(id);
+      const trip = await Trip.findByPk(id, {
+        include: [
+          { model: Bus, as: 'bus', attributes: ['registrationNumber', 'capacity'] },
+          { model: Route, as: 'route', attributes: ['name', 'startPoint', 'endPoint', 'distance', 'estimatedDuration'] }
+        ]
+      });
       if (!trip) {
         res.status(404).json({ success: false, message: 'Trip not found' });
         return;
@@ -114,8 +120,8 @@ export class TripController {
         res.status(404).json({ success: false, message: 'No bus assigned to driver.' });
         return;
       }
-      await bus.update({ status: 'active' }); 
-      
+      await bus.update({ status: 'active' });
+
       res.status(200).json({
         success: true,
         message: 'Driver trip started',
@@ -138,8 +144,8 @@ export class TripController {
         res.status(404).json({ success: false, message: 'No bus assigned to driver.' });
         return;
       }
-      await bus.update({ status: 'inactive' }); 
-      
+      await bus.update({ status: 'inactive' });
+
       res.status(200).json({
         success: true,
         message: 'Driver trip ended',
@@ -158,7 +164,7 @@ export class TripController {
         return;
       }
       const bus = await Bus.findOne({ where: { driverId } });
-      
+
       if (!bus || bus.status !== 'active') {
         res.status(404).json({ success: false, message: 'No active trip.' });
         return;
@@ -184,6 +190,11 @@ export class TripController {
       const bus = await Bus.findOne({ where: { driverId } });
       if (!bus) {
         res.status(404).json({ success: false, message: 'No assignment found' });
+        return;
+      }
+
+      if (!bus.routeId) {
+        res.status(404).json({ success: false, message: 'No route assigned to your bus yet.' });
         return;
       }
 
@@ -273,6 +284,26 @@ export class TripController {
       res.status(200).json({ success: true, message: 'All trips retrieved', data: { trips, total, page, limit } });
     } catch (error) {
       next(error);
+    }
+  }
+
+  // --- Simulation Methods ---
+
+  async simulateTapIn(req: Request, res: Response): Promise<void> {
+    try {
+      const trip = await tripService.simulateTapIn(req.body);
+      res.status(201).json({ success: true, message: 'Tap In successful', data: trip });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
+    }
+  }
+
+  async simulateTapOut(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await tripService.simulateTapOut(req.body);
+      res.status(200).json({ success: true, message: 'Tap Out successful', data: result });
+    } catch (error: any) {
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 }
