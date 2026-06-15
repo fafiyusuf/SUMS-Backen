@@ -106,6 +106,25 @@ export class UserController {
       res.status(500).json({ success: false, message: 'Server Error', error });
     }
   }
+
+  async createUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { fullName, email, phone, password, role, status } = req.body;
+      const result = await userService.createUser({ fullName, email, phone, password, role, status });
+      res.status(201).json({
+        success: true,
+        message: 'User created successfully',
+        data: result
+      });
+    } catch (error: any) {
+      if (error.message === 'Email already in use' || error.message === 'Phone number already in use') {
+        res.status(400).json({ success: false, message: error.message });
+        return;
+      }
+      res.status(500).json({ success: false, message: error.message || 'Server Error', error });
+    }
+  }
 }
+
 
 export default new UserController();

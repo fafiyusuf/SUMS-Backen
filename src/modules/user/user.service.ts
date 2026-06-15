@@ -76,6 +76,60 @@ export class UserService {
     delete (userData as any).password;
     return userData;
   }
+
+  async createUser(data: any) {
+    const existingEmail = await User.findOne({ where: { email: data.email } });
+    if (existingEmail) {
+      throw new Error('Email already in use');
+    }
+
+    if (data.phone) {
+      const existingPhone = await User.findOne({ where: { phone: data.phone } });
+      if (existingPhone) {
+        throw new Error('Phone number already in use');
+      }
+    }
+
+    const bcrypt = require('bcryptjs');
+    const saltRounds = 10;
+    const hashedPassword = bcrypt.hashSync(data.password, saltRounds);
+
+    const { sequelize } = require('../../config/database');
+    const { Wallet } = require('../wallet/wallet.model');
+    const { SmartCard } = require('../card/smartCard.model');
+    const { generateCardId } = require('../../utils/helpers');
+
+    const transaction = await sequelize.transaction();
+    try {
+      const user = await User.create({
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone || null,
+        password: hashedPassword,
+        role: data.role,
+        status: data.status || 'active'
+      }, { transaction });
+
+      if (data.role === 'passenger') {
+        // Create wallet
+        await Wallet.create({ userId: user.id, balance: 0, currency: 'ETB' }, { transaction });
+
+        // Generate smart card
+        const cardId = generateCardId();
+        await SmartCard.create({ cardId, userId: user.id, status: 'ACTIVE', activatedAt: new Date() }, { transaction });
+      }
+
+      await transaction.commit();
+      
+      const userData = user.toJSON();
+      delete (userData as any).password;
+      return userData;
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
 }
+
 
 export default new UserService();

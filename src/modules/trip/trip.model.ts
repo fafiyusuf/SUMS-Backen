@@ -7,9 +7,9 @@ export interface TripAttributes {
   busId: string;
   routeId: string;
   startStopId: string;
-  endStopId: string;
+  endStopId?: string | null;
   startTime: Date;
-  endTime?: Date;
+  endTime?: Date | null;
   fare: number;
   status: 'ongoing' | 'completed' | 'cancelled';
   createdAt?: Date;
@@ -24,9 +24,9 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> implemen
   public busId!: string;
   public routeId!: string;
   public startStopId!: string;
-  public endStopId!: string;
+  public endStopId?: string | null;
   public startTime!: Date;
-  public endTime?: Date;
+  public endTime?: Date | null;
   public fare!: number;
   public status!: 'ongoing' | 'completed' | 'cancelled';
 
@@ -75,7 +75,7 @@ Trip.init(
     },
     endStopId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'stops',
         key: 'id'

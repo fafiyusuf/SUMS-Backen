@@ -34,6 +34,20 @@ class ScheduleController {
       }
     }
   }
+
+  async deleteSchedule(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { scheduleId } = req.params;
+      await scheduleService.deleteSchedule(scheduleId);
+      res.status(200).json({ success: true, message: 'Schedule deleted successfully' });
+    } catch (error: any) {
+      if (error.message === 'Schedule not found') {
+        res.status(404).json({ success: false, message: 'Schedule not found' });
+      } else {
+        next(error);
+      }
+    }
+  }
 }
 
 export default new ScheduleController();

@@ -3,7 +3,7 @@ import scheduleController from './schedule.controller';
 import verifyToken from '@/middleware/authMiddleware';
 import requireRole from '@/middleware/roleMiddleware';
 import { validate } from '@/middleware/validate';
-import { createScheduleSchema, updateScheduleSchema, getRouteSchedulesSchema } from './schedule.schema';
+import { createScheduleSchema, updateScheduleSchema, getRouteSchedulesSchema, deleteScheduleSchema } from './schedule.schema';
 
 const router = express.Router();
 
@@ -145,5 +145,6 @@ router.post('/', verifyToken, requireRole('admin'), validate(createScheduleSchem
  *         description: Schedule not found
  */
 router.put('/:scheduleId', verifyToken, requireRole('admin'), validate(updateScheduleSchema), scheduleController.updateSchedule);
+router.delete('/:scheduleId', verifyToken, requireRole('admin'), validate(deleteScheduleSchema), scheduleController.deleteSchedule);
 
 export default router;

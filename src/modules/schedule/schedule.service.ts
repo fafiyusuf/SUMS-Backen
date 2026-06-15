@@ -22,6 +22,15 @@ class ScheduleService {
     }
     return await schedule.update(data);
   }
+
+  async deleteSchedule(scheduleId: string) {
+    const schedule = await Schedule.findByPk(scheduleId);
+    if (!schedule) {
+      throw new Error('Schedule not found');
+    }
+    await schedule.destroy();
+    return true;
+  }
 }
 
 export default new ScheduleService();

@@ -8,7 +8,8 @@ import {
     getUserSchema,
     updateProfileSchema,
     updateUserStatusSchema,
-    updateUserSchema
+    updateUserSchema,
+    createUserSchema
 } from './user.schema';
 
 const router = express.Router();
@@ -158,5 +159,6 @@ router.get('/:id', validate(getUserSchema), userController.getUser);
  */
 router.put('/:id/status', validate(updateUserStatusSchema), userController.updateUserStatus);
 router.put('/:id', validate(updateUserSchema), userController.updateUser);
+router.post('/', validate(createUserSchema), userController.createUser);
 
 export default router;
