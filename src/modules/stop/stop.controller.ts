@@ -11,6 +11,16 @@ export class StopController {
     }
   }
 
+  async getStopsByRoute(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { routeId } = req.params;
+      const stops = await stopService.getStopsByRoute(routeId);
+      res.status(200).json({ success: true, message: 'Stops for route retrieved', data: stops });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getStop(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;

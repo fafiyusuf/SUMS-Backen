@@ -10,6 +10,13 @@ export class StopService {
     });
   }
 
+  async getStopsByRoute(routeId: string) {
+    return await Stop.findAll({
+      where: { routeId },
+      order: [['sequenceNumber', 'ASC']]
+    });
+  }
+
   async getStop(id: string) {
     const stop = await Stop.findByPk(id);
     if (!stop) throw new Error('Stop not found');

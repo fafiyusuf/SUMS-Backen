@@ -34,6 +34,7 @@ const router = express.Router();
  */
 
 router.get('/', verifyToken, stopController.getAllStops);
+router.get('/route/:routeId', verifyToken, stopController.getStopsByRoute);
 
 /**
  * @swagger
