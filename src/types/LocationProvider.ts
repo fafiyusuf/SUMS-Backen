@@ -7,6 +7,8 @@ export interface LocationData {
     routeId: string;
     timestamp: string; // ISO-8601
     status?: string;
+    currentPassengers?: number;
+    capacity?: number;
 }
 
 export interface LocationProvider {

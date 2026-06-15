@@ -1,5 +1,5 @@
-import { LocationData, LocationProvider } from '../../types/LocationProvider';
 import { Bus, Route, RoutePathCoordinate } from '../../modules/models';
+import { LocationData, LocationProvider } from '../../types/LocationProvider';
 
 interface CachedPath {
     coordinates: { latitude: number; longitude: number }[];
@@ -200,7 +200,9 @@ export class RouteReplayProvider implements LocationProvider {
                     heading,
                     routeId: bus.routeId,
                     timestamp: new Date().toISOString(),
-                    status: 'active'
+                    status: 'active',
+                    currentPassengers: bus.currentPassengers,
+                    capacity: bus.capacity
                 };
 
                 if (this.callback) {

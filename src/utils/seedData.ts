@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { Bus, Route, RoutePathCoordinate, Stop, User } from '../modules/models';
+import { Bus, Route, RoutePathCoordinate, Stop, SystemSetting, User } from '../modules/models';
 
 export const seedAdamaData = async () => {
     try {
@@ -166,6 +166,26 @@ export const seedAdamaData = async () => {
             });
             if (busCreated) console.log(`Seeded bus: ${bus.registrationNumber} for ${route.name}`);
         }
+
+        // 4. Seed Default Pricing Settings
+        await SystemSetting.findOrCreate({
+            where: { key: 'BASE_FARE' },
+            defaults: {
+                key: 'BASE_FARE',
+                value: '5',
+                description: 'Minimum fare for any bus trip (ETB)'
+            }
+        });
+
+        await SystemSetting.findOrCreate({
+            where: { key: 'PER_KM_RATE' },
+            defaults: {
+                key: 'PER_KM_RATE',
+                value: '2',
+                description: 'Fare rate per kilometer traveled (ETB)'
+            }
+        });
+
     } catch (error) {
         console.error('Error seeding Adama data:', error);
     }

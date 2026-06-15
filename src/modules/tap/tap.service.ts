@@ -1,6 +1,7 @@
 import { getDistance } from '../../utils/geoUtils';
 import { Bus } from '../bus/bus.model';
 import { SmartCard } from '../card/smartCard.model';
+import settingsService from '../settings/settings.service';
 import { Stop } from '../stop/stop.model';
 import { Trip } from '../trip/trip.model';
 import { Wallet } from '../wallet/wallet.model';
@@ -48,6 +49,7 @@ export class TapService {
             fare: 0
         });
 
+        await bus.increment('currentPassengers');
         await card.update({ lastUsedAt: new Date() });
 
         return { tap, trip };
@@ -78,8 +80,11 @@ export class TapService {
         );
         const distanceKm = distanceMeters / 1000;
 
-        // 2 ETB per KM, min 5 ETB
-        const calculatedFare = Math.max(5, Math.ceil(distanceKm * 2));
+        // Retrieve pricing from dynamic settings
+        const baseFare = await settingsService.getNumericSetting('BASE_FARE', 5);
+        const perKmRate = await settingsService.getNumericSetting('PER_KM_RATE', 2);
+
+        const calculatedFare = Math.max(baseFare, Math.ceil(distanceKm * perKmRate));
 
         await walletService.deductBalance(card.userId, calculatedFare, `Bus trip: ${startStop.name} to ${endStop.name}`);
 
@@ -89,6 +94,11 @@ export class TapService {
             fare: calculatedFare,
             status: 'completed'
         });
+
+        const bus = await Bus.findByPk(data.busId);
+        if (bus) {
+            await bus.decrement('currentPassengers');
+        }
 
         const tap = await Tap.create({
             cardId: card.id,

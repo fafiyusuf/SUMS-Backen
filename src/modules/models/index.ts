@@ -5,6 +5,7 @@ export { GPSCoordinate } from '../gps/gps.model';
 export { Incident } from '../incident/incident.model';
 export { Route } from '../route/route.model';
 export { Schedule } from '../schedule/schedule.model';
+export { SystemSetting } from '../settings/settings.model';
 export { Stop } from '../stop/stop.model';
 export { Tap } from '../tap/tap.model';
 export { Trip } from '../trip/trip.model';
@@ -20,6 +21,7 @@ import { GPSCoordinate } from '../gps/gps.model';
 import { Incident } from '../incident/incident.model';
 import { Route } from '../route/route.model';
 import { Schedule } from '../schedule/schedule.model';
+import { SystemSetting } from '../settings/settings.model';
 import { Stop } from '../stop/stop.model';
 import { Tap } from '../tap/tap.model';
 import { Trip } from '../trip/trip.model';
@@ -85,5 +87,8 @@ Schedule.belongsTo(Bus, { foreignKey: 'busId', as: 'bus', onDelete: 'CASCADE' })
 Tap.belongsTo(SmartCard, { foreignKey: 'cardId', as: 'card' });
 Tap.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
 Tap.belongsTo(Stop, { foreignKey: 'stopId', as: 'stop' });
+
+// Settings
+SystemSetting.belongsTo(User, { foreignKey: 'updatedBy', as: 'admin' });
 
 export { sequelize } from '../../config/database';

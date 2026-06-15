@@ -7,6 +7,7 @@ import gpsRoutes from './modules/gps/gps.routes';
 import incidentRoutes from './modules/incident/incident.routes';
 import routeRoutes from './modules/route/route.routes';
 import scheduleRoutes from './modules/schedule/schedule.routes';
+import settingsRoutes from './modules/settings/settings.routes';
 import stopRoutes from './modules/stop/stop.routes';
 import tapRoutes from './modules/tap/tap.routes';
 import telebirrRoutes from './modules/telebirr/telebirr.routes';
@@ -32,5 +33,6 @@ router.use('/trips', tripRoutes);
 router.use('/wallet', walletRoutes);
 router.use('/schedule', scheduleRoutes);
 router.use('/tap', tapRoutes);
+router.use('/settings', settingsRoutes);
 
 export default router;
