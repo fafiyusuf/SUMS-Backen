@@ -70,6 +70,20 @@ export class StopController {
       next(error);
     }
   }
+
+  async getStopETA(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const etas = await stopService.getStopETA(id);
+      res.status(200).json({ success: true, message: 'Stop ETA retrieved', data: etas });
+    } catch (error: any) {
+      if (error.message === 'Stop not found') {
+        res.status(404).json({ success: false, message: error.message });
+        return;
+      }
+      next(error);
+    }
+  }
 }
 
 export default new StopController();

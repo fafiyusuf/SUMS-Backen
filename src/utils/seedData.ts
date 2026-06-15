@@ -1,19 +1,19 @@
-import { Bus, Route, User, RoutePathCoordinate } from '../modules/models';
 import bcrypt from 'bcryptjs';
+import { Bus, Route, RoutePathCoordinate, Stop, User } from '../modules/models';
 
 export const seedAdamaData = async () => {
     try {
-        // 1. Ensure a Driver exists
-        let driver = await User.findOne({ where: { role: 'driver' } });
-        if (!driver) {
-            driver = await User.create({
-                fullName: 'Adama Driver One',
-                email: 'driver1@sum-transport.com',
-                password: await bcrypt.hash('Driver@123', 10),
-                role: 'driver',
+        // 1. Ensure a Passenger exists for testing
+        let passenger = await User.findOne({ where: { role: 'passenger' } });
+        if (!passenger) {
+            passenger = await User.create({
+                fullName: 'Adama Passenger',
+                email: 'passenger@sum-transport.com',
+                password: await bcrypt.hash('Passenger@123', 10),
+                role: 'passenger',
                 status: 'active'
             });
-            console.log('Seeded default driver');
+            console.log('Seeded default passenger');
         }
 
         // 2. Define Adama Routes and Geometry
@@ -90,7 +90,7 @@ export const seedAdamaData = async () => {
             } else {
                 // UPDATE: Re-seed coordinates to ensure new path data is applied
                 await RoutePathCoordinate.destroy({ where: { routeId: route.id } });
-                console.log(`Updating coordinates for route: ${route.name}`);
+                // console.log(`Updating coordinates for route: ${route.name}`);
                 for (let i = 0; i < coordinates.length; i++) {
                     await RoutePathCoordinate.create({
                         routeId: route.id,
@@ -101,7 +101,30 @@ export const seedAdamaData = async () => {
                 }
             }
 
-            // 3. Ensure a Bus exists for each route
+            // Seed key stops for this route (Start and End)
+            await Stop.findOrCreate({
+                where: { name: rest.startPoint, routeId: route.id },
+                defaults: {
+                    name: rest.startPoint,
+                    routeId: route.id,
+                    latitude: coordinates[0].lat,
+                    longitude: coordinates[0].lng,
+                    sequenceNumber: 0
+                }
+            });
+
+            await Stop.findOrCreate({
+                where: { name: rest.endPoint, routeId: route.id },
+                defaults: {
+                    name: rest.endPoint,
+                    routeId: route.id,
+                    latitude: coordinates[coordinates.length - 1].lat,
+                    longitude: coordinates[coordinates.length - 1].lng,
+                    sequenceNumber: coordinates.length - 1
+                }
+            });
+
+            // 3. Ensure a unique Driver and Bus exists for each route
             const busRegMap: Record<string, string> = {
                 'Route A': 'ET-101',
                 'Route B': 'ET-102',
@@ -109,11 +132,32 @@ export const seedAdamaData = async () => {
             };
             const busReg = busRegMap[route.name];
 
+            // Reuse driver if bus already has one, or find/create a new one
+            const existingBus = await Bus.findOne({ where: { registrationNumber: busReg } });
+            let driverId;
+
+            if (existingBus) {
+                driverId = existingBus.driverId;
+            } else {
+                const driverEmail = `driver-${busReg.toLowerCase()}@sum-transport.com`;
+                const [driver] = await User.findOrCreate({
+                    where: { email: driverEmail },
+                    defaults: {
+                        fullName: `Driver for ${busReg}`,
+                        email: driverEmail,
+                        password: await bcrypt.hash('Driver@123', 10),
+                        role: 'driver',
+                        status: 'active'
+                    }
+                });
+                driverId = driver.id;
+            }
+
             const [bus, busCreated] = await Bus.findOrCreate({
                 where: { registrationNumber: busReg },
                 defaults: {
                     registrationNumber: busReg,
-                    driverId: driver.id,
+                    driverId: driverId,
                     routeId: route.id,
                     capacity: 50,
                     currentPassengers: 0,

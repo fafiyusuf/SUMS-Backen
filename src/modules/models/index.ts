@@ -6,11 +6,12 @@ export { Incident } from '../incident/incident.model';
 export { Route } from '../route/route.model';
 export { Schedule } from '../schedule/schedule.model';
 export { Stop } from '../stop/stop.model';
+export { Tap } from '../tap/tap.model';
 export { Trip } from '../trip/trip.model';
 export { User } from '../user/user.model';
+export { RoutePathCoordinate } from '../wallet/RoutePathCoordinate';
 export { Transaction } from '../wallet/transaction.model';
 export { Wallet } from '../wallet/wallet.model';
-export { RoutePathCoordinate } from '../wallet/RoutePathCoordinate';
 
 // Import models for associations
 import { Bus } from '../bus/bus.model';
@@ -20,6 +21,7 @@ import { Incident } from '../incident/incident.model';
 import { Route } from '../route/route.model';
 import { Schedule } from '../schedule/schedule.model';
 import { Stop } from '../stop/stop.model';
+import { Tap } from '../tap/tap.model';
 import { Trip } from '../trip/trip.model';
 import { User } from '../user/user.model';
 import { Transaction } from '../wallet/transaction.model';
@@ -78,5 +80,10 @@ Schedule.belongsTo(Route, { foreignKey: 'routeId', as: 'route', onDelete: 'CASCA
 // Bus & Schedule (1:N)
 Bus.hasMany(Schedule, { foreignKey: 'busId', as: 'schedules', onDelete: 'CASCADE' });
 Schedule.belongsTo(Bus, { foreignKey: 'busId', as: 'bus', onDelete: 'CASCADE' });
+
+// Tap associations
+Tap.belongsTo(SmartCard, { foreignKey: 'cardId', as: 'card' });
+Tap.belongsTo(Bus, { foreignKey: 'busId', as: 'bus' });
+Tap.belongsTo(Stop, { foreignKey: 'stopId', as: 'stop' });
 
 export { sequelize } from '../../config/database';

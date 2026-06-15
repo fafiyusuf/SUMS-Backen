@@ -37,7 +37,11 @@ export class BusController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-      const result = await busService.getAllBuses(page, limit);
+      const filters = {
+        status: req.query.status,
+        routeId: req.query.routeId
+      };
+      const result = await busService.getAllBuses(page, limit, filters);
       res.status(200).json({ success: true, message: 'Buses retrieved', data: result });
     } catch (error) {
       next(error);

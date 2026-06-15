@@ -11,6 +11,9 @@ import routes from './routes';
 
 const app: Express = express();
 
+// Trust proxy for rate limiting (needed for ngrok/proxies)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet());
 app.use(cors({

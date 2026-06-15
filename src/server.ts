@@ -1,53 +1,55 @@
+import dns from "dns";
 import 'dotenv/config';
 import http from 'http';
 import app from './app';
 import { sequelize } from './config/database';
 import config from './config/env';
 import { initializeAssociations } from './database/connection';
-import logger from './utils/logger';
-import socketServer from './websocket/socketServer';
 import './queues/persistenceWorker'; // Start persistence worker
+import logger from './utils/logger';
 import { seedAdamaData } from './utils/seedData';
-import dns from "dns";
+import socketServer from './websocket/socketServer';
+
 dns.setDefaultResultOrder("ipv4first");
 const PORT = config.port || 3000;
 
 async function startServer() {
+  console.log('--- Server Startup Initiated ---');
   try {
-    // Initialize database associations
+    // 1. Initialize database associations
+    console.log('1. Initializing associations...');
     initializeAssociations();
 
-    // Seed Adama Data
-    await seedAdamaData();
-
-    // Import and start LocationService AFTER seeding
-    await import('./services/LocationService');
-    console.log('LocationService initialized after seeding');
-
-    // Test database connection
+    // 2. Test database connection
+    console.log('2. Authenticating database...');
     await sequelize.authenticate();
     logger.info('Database connection established successfully');
 
-    // Sync database (Create missing tables)
-    await sequelize.sync({ alter: true });
+    // 3. Sync database (Create missing tables) - MUST happen before seeding
+    console.log('3. Syncing database...');
+    await sequelize.sync();
     logger.info('Database synchronized');
 
-    // Sync database (use { alter: true } in development, migrations in production)
-    /* if (config.env === 'development') {
-       await sequelize.sync({ alter: true });
-       logger.info('Database synchronized');
-     }*/
-
-    // Create HTTP server
+    // 4. Create HTTP server and initialize WebSockets
+    console.log('4. Initializing HTTP & Socket server...');
     const server = http.createServer(app);
-
-    // Initialize WebSocket server
     socketServer.initialize(server);
 
-    // Start server
+    // 5. Seed Adama Data
+    console.log('5. Seeding Adama data...');
+    await seedAdamaData();
+
+    // 6. Start LocationService
+    console.log('6. Starting LocationService...');
+    const { default: locationService } = await import('./services/LocationService');
+    await locationService.start();
+    logger.info('LocationService started and simulation loop running');
+
+    // 7. Start listening
+    console.log(`7. Attempting to listen on port ${PORT}...`);
     server.listen(PORT, () => {
+      console.log(`🚀 SERVER READY ON PORT ${PORT}`);
       logger.info(`Server running on port ${PORT}`);
-      //logger.info(`Environment: ${config.env}`);
     });
   } catch (error) {
     logger.error(`Server startup failed: ${error}`);

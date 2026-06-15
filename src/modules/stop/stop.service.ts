@@ -1,5 +1,7 @@
-import { Stop } from './stop.model';
 import { sequelize } from '../../config/database';
+import locationService from '../../services/LocationService';
+import { estimateTime, getDistance } from '../../utils/geoUtils';
+import { Stop } from './stop.model';
 
 export class StopService {
   async getAllStops() {
@@ -68,6 +70,37 @@ export class StopService {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  async getStopETA(stopId: string) {
+    const stop = await Stop.findByPk(stopId, {
+      include: [{ model: require('../route/route.model').Route, as: 'route' }]
+    });
+    if (!stop) throw new Error('Stop not found');
+
+    const routeId = (stop as any).routeId;
+
+    // Find all active buses for the route this stop belongs to
+    // We use the redis set managed by LocationService
+    const activeBusIds = await (locationService as any).redis.smembers(`route:${routeId}:buses`);
+
+    const etas = [];
+    for (const busId of activeBusIds) {
+      const location = await locationService.getBusLocation(busId);
+      if (location) {
+        const distance = getDistance(location.latitude, location.longitude, stop.latitude, stop.longitude);
+        const eta = estimateTime(distance, location.speed || 40);
+
+        etas.push({
+          busId,
+          distance,
+          eta,
+          lastUpdated: location.timestamp
+        });
+      }
+    }
+
+    return etas.sort((a, b) => a.eta - b.eta);
   }
 }
 

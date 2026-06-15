@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../config/database';
+import locationService from '../../services/LocationService';
 import { GPSCoordinate } from '../gps/gps.model';
 import { Incident } from '../incident/incident.model';
 import { Schedule } from '../schedule/schedule.model';
@@ -53,11 +54,56 @@ export class BusService {
     return bus;
   }
 
-  async getAllBuses(page: number, limit: number) {
+  async getAllBuses(page: number, limit: number, filters: any = {}) {
     const offset = (page - 1) * limit;
-    const buses = await Bus.findAll({ limit, offset, order: [['createdAt', 'ASC']] });
-    const total = await Bus.count();
-    return { buses, total, page, limit };
+
+    const where: any = {};
+    if (filters.status) where.status = filters.status;
+    if (filters.routeId) where.routeId = filters.routeId;
+
+    const { rows: buses, count: total } = await Bus.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order: [['createdAt', 'ASC']],
+      include: [
+        {
+          model: GPSCoordinate,
+          as: 'gpsCoordinates',
+          limit: 1,
+          order: [['timestamp', 'DESC']]
+        }
+      ]
+    });
+
+    // Format the result to include a 'location' property
+    const formattedBuses = await Promise.all(buses.map(async (bus: any) => {
+      const busJson = bus.toJSON();
+
+      // Try Redis first for live location
+      const liveLocation = await locationService.getBusLocation(bus.id);
+
+      if (liveLocation) {
+        busJson.location = {
+          latitude: liveLocation.latitude,
+          longitude: liveLocation.longitude,
+          lastUpdated: liveLocation.timestamp
+        };
+      } else if (busJson.gpsCoordinates && busJson.gpsCoordinates.length > 0) {
+        // Fallback to database
+        const latest = busJson.gpsCoordinates[0];
+        busJson.location = {
+          latitude: latest.latitude,
+          longitude: latest.longitude,
+          lastUpdated: latest.timestamp
+        };
+      }
+
+      delete busJson.gpsCoordinates;
+      return busJson;
+    }));
+
+    return { buses: formattedBuses, total, page, limit };
   }
 
   async updateBus(id: string, updateData: any) {

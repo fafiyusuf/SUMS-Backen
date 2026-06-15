@@ -23,7 +23,7 @@ const shouldUseSsl =
 
 const sequelizeConfig: Options = {
   dialect: 'postgres',
-  logging: config.env === 'development' ? console.log : false,
+  logging: false, // Only log errors if needed, disabled by default for cleaner terminal
   dialectOptions: {
     ssl: shouldUseSsl ? {
       require: true,

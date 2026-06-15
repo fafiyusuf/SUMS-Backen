@@ -1,9 +1,9 @@
 import Redis from 'ioredis';
 import config from '../config/env';
-import { LocationData, LocationProvider } from '../types/LocationProvider';
-import { RouteReplayProvider } from './providers/RouteReplayProvider';
-import socketServer from '../websocket/socketServer';
 import { locationPersistenceQueue } from '../queues';
+import { LocationData, LocationProvider } from '../types/LocationProvider';
+import socketServer from '../websocket/socketServer';
+import { RouteReplayProvider } from './providers/RouteReplayProvider';
 
 export class LocationService {
     private provider: LocationProvider | null = null;
@@ -14,6 +14,10 @@ export class LocationService {
             host: config.redis.host,
             port: config.redis.port,
         });
+    }
+
+    public async start() {
+        if (this.provider) return; // Already started
         this.initializeProvider();
     }
 
@@ -63,7 +67,7 @@ export class LocationService {
             // 3. Queue for persistence and analytics
             await locationPersistenceQueue.add('persist-gps', data);
 
-            console.debug(`Location updated for bus ${data.busId} at ${data.latitude}, ${data.longitude}`);
+            // console.debug(`Location updated for bus ${data.busId} at ${data.latitude}, ${data.longitude}`);
         } catch (error) {
             console.error('Error handling location update:', error);
         }
