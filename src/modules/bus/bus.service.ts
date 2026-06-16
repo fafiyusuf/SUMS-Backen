@@ -170,7 +170,7 @@ export class BusService {
       await Trip.destroy({ where: { busId: id }, transaction });
       await GPSCoordinate.destroy({ where: { busId: id }, transaction });
       await Incident.destroy({ where: { busId: id }, transaction });
-      
+
       // Deactivate and unassign schedules instead of deleting them so admin can reassign/delete manually
       await Schedule.update(
         { busId: null, isActive: false },

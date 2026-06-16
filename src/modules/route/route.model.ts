@@ -46,12 +46,14 @@ export interface RouteAttributes {
   endPoint: string;
   distance: number;
   estimatedDuration: number;
+  routeType: 'operational' | 'simulation' | 'test';
+  simulationEnabled: boolean;
   status: 'active' | 'inactive';
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export interface RouteCreationAttributes extends Optional<RouteAttributes, 'id'> { }
+export interface RouteCreationAttributes extends Optional<RouteAttributes, 'id' | 'routeType' | 'simulationEnabled' | 'status'> { }
 
 export class Route extends Model<RouteAttributes, RouteCreationAttributes> implements RouteAttributes {
   public id!: string;
@@ -60,6 +62,8 @@ export class Route extends Model<RouteAttributes, RouteCreationAttributes> imple
   public endPoint!: string;
   public distance!: number;
   public estimatedDuration!: number;
+  public routeType!: 'operational' | 'simulation' | 'test';
+  public simulationEnabled!: boolean;
   public status!: 'active' | 'inactive';
 
   public readonly createdAt!: Date;
@@ -93,6 +97,14 @@ Route.init(
       type: DataTypes.INTEGER,
       allowNull: false,
       comment: 'Duration in minutes'
+    },
+    routeType: {
+      type: DataTypes.ENUM('operational', 'simulation', 'test'),
+      defaultValue: 'operational'
+    },
+    simulationEnabled: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
     status: {
       type: DataTypes.ENUM('active', 'inactive'),

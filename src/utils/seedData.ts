@@ -16,69 +16,65 @@ export const seedAdamaData = async () => {
             console.log('Seeded default passenger');
         }
 
-        // 2. Define Adama Routes and Geometry
+        // 2. Define Adama Routes (Operational and Simulation)
         const adamaRoutes = [
             {
-                name: 'Route A',
+                name: 'Adama Bus Terminal → ASTU',
                 startPoint: 'Bus Terminal',
                 endPoint: 'ASTU Main Gate',
                 distance: 5.2,
                 estimatedDuration: 15,
+                routeType: 'operational' as const,
+                simulationEnabled: true,
                 status: 'active' as const,
                 coordinates: [
-                    { lat: 8.5414, lng: 39.2689 }, // Adama Bus Terminal
-                    { lat: 8.5432, lng: 39.2705 }, // Post Office Junction
-                    { lat: 8.5445, lng: 39.2741 }, // Franko
-                    { lat: 8.5460, lng: 39.2780 }, // Near Stadium
-                    { lat: 8.5482, lng: 39.2815 }, // Near Hospital
-                    { lat: 8.5520, lng: 39.2830 }, // Curve towards ASTU
-                    { lat: 8.5558, lng: 39.2848 }, // ASTU Main Gate
+                    { lat: 8.5414, lng: 39.2689 },
+                    { lat: 8.5432, lng: 39.2705 },
+                    { lat: 8.5445, lng: 39.2741 },
+                    { lat: 8.5460, lng: 39.2780 },
+                    { lat: 8.5482, lng: 39.2815 },
+                    { lat: 8.5520, lng: 39.2830 },
+                    { lat: 8.5558, lng: 39.2848 },
+                ],
+                stops: [
+                    { name: 'Adama Bus Terminal', lat: 8.5414, lng: 39.2689 },
+                    { name: 'Franko', lat: 8.5445, lng: 39.2741 },
+                    { name: 'ASTU Main Gate', lat: 8.5558, lng: 39.2848 }
                 ]
             },
             {
-                name: 'Route B',
-                startPoint: 'Bus Terminal',
-                endPoint: 'Kebele 05',
+                name: 'Posta → Medhanialem',
+                startPoint: 'Posta',
+                endPoint: 'Medhanialem',
                 distance: 4.8,
                 estimatedDuration: 12,
+                routeType: 'operational' as const,
+                simulationEnabled: true,
                 status: 'active' as const,
                 coordinates: [
-                    { lat: 8.5414, lng: 39.2689 }, // Adama Bus Terminal
-                    { lat: 8.5390, lng: 39.2695 }, // Towards Mebrat Hail
-                    { lat: 8.5367, lng: 39.2712 }, // Mebrat Hail
-                    { lat: 8.5340, lng: 39.2750 }, // Near Market
-                    { lat: 8.5312, lng: 39.2785 }, // Kebele 05
-                ]
-            },
-            {
-                name: 'Route C', // REVERSE Route A
-                startPoint: 'ASTU Main Gate',
-                endPoint: 'Bus Terminal',
-                distance: 5.2,
-                estimatedDuration: 15,
-                status: 'active' as const,
-                coordinates: [
-                    { lat: 8.5558, lng: 39.2848 }, // ASTU Main Gate
-                    { lat: 8.5520, lng: 39.2830 },
-                    { lat: 8.5482, lng: 39.2815 },
-                    { lat: 8.5460, lng: 39.2780 },
-                    { lat: 8.5445, lng: 39.2741 },
-                    { lat: 8.5432, lng: 39.2705 },
-                    { lat: 8.5414, lng: 39.2689 }, // Adama Bus Terminal
+                    { lat: 8.5414, lng: 39.2689 },
+                    { lat: 8.5390, lng: 39.2695 },
+                    { lat: 8.5367, lng: 39.2712 },
+                    { lat: 8.5340, lng: 39.2750 },
+                    { lat: 8.5312, lng: 39.2785 },
+                ],
+                stops: [
+                    { name: 'Posta Terminal', lat: 8.5414, lng: 39.2689 },
+                    { name: 'Mebrat Hail', lat: 8.5367, lng: 39.2712 },
+                    { name: 'Medhanialem Kebele 05', lat: 8.5312, lng: 39.2785 }
                 ]
             }
         ];
 
         for (const routeData of adamaRoutes) {
-            const { coordinates, ...rest } = routeData;
+            const { coordinates, stops, ...rest } = routeData;
             const [route, created] = await Route.findOrCreate({
                 where: { name: rest.name },
                 defaults: rest
             });
 
             if (created) {
-                console.log(`Seeded route: ${route.name}`);
-                // Seed coordinates for the newly created route
+                console.log(`Seeded new route: ${route.name}`);
                 for (let i = 0; i < coordinates.length; i++) {
                     await RoutePathCoordinate.create({
                         routeId: route.id,
@@ -126,9 +122,8 @@ export const seedAdamaData = async () => {
 
             // 3. Ensure a unique Driver and Bus exists for each route
             const busRegMap: Record<string, string> = {
-                'Route A': 'ET-101',
-                'Route B': 'ET-102',
-                'Route C': 'ET-103'
+                'Adama Bus Terminal → ASTU': 'ET-101',
+                'Posta → Medhanialem': 'ET-102'
             };
             const busReg = busRegMap[route.name];
 

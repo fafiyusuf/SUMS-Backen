@@ -122,6 +122,30 @@ router.get('/:routeId', verifyToken, validate(getRouteSchema), routeController.g
 
 /**
  * @swagger
+ * /routes/{routeId}/path:
+ *   get:
+ *     summary: Get route path coordinates
+ *     tags: [Routes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: routeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Route ID
+ *     responses:
+ *       200:
+ *         description: Route path retrieved
+ *       404:
+ *         description: Route not found
+ */
+router.get('/:routeId/path', verifyToken, routeController.getRoutePath);
+
+/**
+ * @swagger
  * /routes/{routeId}:
  *   put:
  *     summary: Update a route

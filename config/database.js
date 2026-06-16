@@ -23,11 +23,11 @@ const baseConfig = {
   logging: false,
   dialectOptions: shouldUseSsl
     ? {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false
-        }
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
       }
+    }
     : undefined
 };
 

@@ -1,40 +1,22 @@
 import { Options, Sequelize } from 'sequelize';
 import config from './env';
 
-if (!config.databaseUrl) {
-  throw new Error("DATABASE_URL is not set in the environment variables.");
-}
-
-const parsedDatabaseUrl = (() => {
-  try {
-    return new URL(config.databaseUrl);
-  } catch {
-    return null;
-  }
-})();
-
-const sslMode = parsedDatabaseUrl?.searchParams.get('sslmode')?.toLowerCase() || '';
-const shouldUseSsl =
-  config.env === 'production' ||
-  config.env === 'staging' ||
-  sslMode === 'require' ||
-  sslMode === 'verify-ca' ||
-  sslMode === 'verify-full';
+const databaseUrl = config.databaseUrl;
 
 const sequelizeConfig: Options = {
   dialect: 'postgres',
   logging: false, // Only log errors if needed, disabled by default for cleaner terminal
   dialectOptions: {
-    ssl: shouldUseSsl ? {
+    ssl: {
       require: true,
       rejectUnauthorized: false
-    } : false,
-    connectTimeout: 10000 // 🔥 ADD THIS (10 seconds)
+    },
+    connectTimeout: 30000 // 30 seconds is a good balance
   },
   pool: {
-    max: 5,
-    min: 0,
-    acquire: 30000,
+    max: 10,
+    min: 1,
+    acquire: 60000,
     idle: 10000
   },
   define: {
@@ -42,6 +24,7 @@ const sequelizeConfig: Options = {
     underscored: true
   }
 };
-export const sequelize = new Sequelize(config.databaseUrl, sequelizeConfig);
+
+export const sequelize = new Sequelize(databaseUrl, sequelizeConfig);
 
 export default sequelizeConfig;

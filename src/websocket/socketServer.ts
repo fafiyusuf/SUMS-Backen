@@ -7,7 +7,7 @@ class SocketServer {
   initialize(server: HTTPServer): void {
     this.io = new SocketIOServer(server, {
       cors: {
-        origin: '*', // Allow all origins for development to ensure connectivity
+        origin: '*',
         methods: ['GET', 'POST']
       },
       transports: ['websocket', 'polling']
@@ -22,34 +22,13 @@ class SocketServer {
     this.io.on('connection', (socket: Socket) => {
       console.log(`Client connected: ${socket.id}`);
 
-      // GPS updates (standardizing on bus:location_update)
-      socket.on('bus:location_update', (data) => {
-        this.io?.emit('bus:location_update', data);
+      // Handle bus-specific subscriptions as requested
+      socket.on('subscribe-bus', (busId: string) => {
+        socket.join(`bus-${busId}`);
+        console.log(`Socket ${socket.id} joined room bus-${busId}`);
       });
 
-      socket.on('gps:update', (data) => {
-        this.io?.emit('bus:location_update', data);
-      });
-
-      // ETA events
-      socket.on('eta:request', (data) => {
-        socket.broadcast.emit('eta:response', data);
-      });
-
-      // Incident events
-      socket.on('incident:report', (data) => {
-        socket.broadcast.emit('incident:reported', data);
-      });
-
-      // Trip events
-      socket.on('trip:started', (data) => {
-        socket.broadcast.emit('trip:status', { ...data, status: 'started' });
-      });
-
-      socket.on('trip:completed', (data) => {
-        socket.broadcast.emit('trip:status', { ...data, status: 'completed' });
-      });
-
+      // Maintain general events
       socket.on('disconnect', () => {
         console.log(`Client disconnected: ${socket.id}`);
       });

@@ -11,12 +11,13 @@ export interface TripAttributes {
   startTime: Date;
   endTime?: Date | null;
   fare: number;
+  isSimulation: boolean;
   status: 'ongoing' | 'completed' | 'cancelled';
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export interface TripCreationAttributes extends Optional<TripAttributes, 'id'> { }
+export interface TripCreationAttributes extends Optional<TripAttributes, 'id' | 'isSimulation' | 'fare' | 'status' | 'startTime'> { }
 
 export class Trip extends Model<TripAttributes, TripCreationAttributes> implements TripAttributes {
   public id!: string;
@@ -28,6 +29,7 @@ export class Trip extends Model<TripAttributes, TripCreationAttributes> implemen
   public startTime!: Date;
   public endTime?: Date | null;
   public fare!: number;
+  public isSimulation!: boolean;
   public status!: 'ongoing' | 'completed' | 'cancelled';
 
   public readonly createdAt!: Date;
@@ -92,6 +94,10 @@ Trip.init(
     fare: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false
+    },
+    isSimulation: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
     status: {
       type: DataTypes.ENUM('ongoing', 'completed', 'cancelled'),

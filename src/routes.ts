@@ -1,4 +1,5 @@
 import express from 'express';
+import { authLimiter, locationLimiter } from './middleware/rateLimiter';
 import authRoutes from './modules/auth/auth.routes';
 import busRoutes from './modules/bus/bus.routes';
 import cardRoutes from './modules/card/card.routes';
@@ -18,18 +19,18 @@ import walletRoutes from './modules/wallet/wallet.routes';
 
 const router = express.Router();
 
-router.use('/auth', authRoutes);
+router.use('/auth', authLimiter, authRoutes);
 router.use('/users', userRoutes);
 router.use('/buses', busRoutes);
 router.use('/cards', cardRoutes);
 router.use('/driver', driverRoutes);
-router.use('/gps', gpsRoutes);
+router.use('/gps', locationLimiter, gpsRoutes);
 router.use('/incidents', incidentRoutes);
 router.use('/routes', routeRoutes);
 router.use('/stops', stopRoutes);
 router.use('/telebirr', telebirrRoutes);
 router.use('/telebirr-h5', telebirrH5Routes);
-router.use('/trips', tripRoutes);
+router.use('/trips', locationLimiter, tripRoutes);
 router.use('/wallet', walletRoutes);
 router.use('/schedule', scheduleRoutes);
 router.use('/tap', tapRoutes);

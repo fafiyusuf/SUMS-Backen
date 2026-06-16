@@ -58,8 +58,19 @@ export class LocationService {
             // 2. Broadcast via WebSocket
             const io = socketServer.getIO();
             if (io) {
-                io.emit('bus:location_update', data);
-                // console.debug(`Broadcasted location for bus ${data.busId}`);
+                // Broadcast to specific bus room
+                io.to(`bus-${data.busId}`).emit('location-update', {
+                    ...data,
+                    timestamp: new Date()
+                });
+
+                // Broadcast to all (for fleet view)
+                io.emit('all-locations', { [data.busId]: data });
+
+                // Standardized position update event
+                io.emit('bus:position_update', data);
+
+                console.debug(`📡 Broadcasting location for bus ${data.busId} at ${data.latitude}, ${data.longitude}`);
             } else {
                 console.warn('Socket.io not initialized, skipping broadcast');
             }

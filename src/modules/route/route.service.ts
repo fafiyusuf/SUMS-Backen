@@ -1,4 +1,6 @@
+import axios from 'axios';
 import { Route } from './route.model';
+import { RoutePathCoordinate } from '../models';
 import { sequelize } from '../../config/database';
 
 export class RouteService {
@@ -7,7 +9,12 @@ export class RouteService {
   }
 
   async getRoute(routeId: string) {
-    const route = await Route.findByPk(routeId);
+    const route = await Route.findByPk(routeId, {
+      include: [
+        { model: require('../stop/stop.model').Stop, as: 'stops' },
+        { model: require('../wallet/RoutePathCoordinate').RoutePathCoordinate, as: 'coordinates' }
+      ]
+    });
     if (!route) throw new Error('Route not found');
     return route;
   }
@@ -19,10 +26,71 @@ export class RouteService {
       where.status = status;
     }
 
-    const routes = await Route.findAll({ where, limit, offset });
+    const routes = await Route.findAll({
+      where,
+      limit,
+      offset,
+      include: [
+        { model: require('../stop/stop.model').Stop, as: 'stops' },
+        {
+          model: require('../trip/trip.model').Trip,
+          as: 'trips',
+          where: { status: 'ongoing' },
+          required: false,
+          include: [{ model: require('../bus/bus.model').Bus, as: 'bus' }]
+        }
+      ]
+    });
+
     const total = await Route.count({ where });
 
-    return { routes, total, page, limit };
+    const enrichedRoutes = routes.map((route: any) => {
+      const activeTrips = route.trips || [];
+      const activeBuses = activeTrips.map((t: any) => t.bus).filter(Boolean);
+
+      return {
+        ...route.toJSON(),
+        stopCount: route.stops?.length || 0,
+        activeTripsCount: activeTrips.length,
+        activeBusesCount: activeBuses.length,
+        stops: route.stops,
+        activeTrips: activeTrips
+      };
+    });
+
+    return { routes: enrichedRoutes, total, page, limit };
+  }
+
+  async getRoutePath(routeId: string) {
+    try {
+      const { Stop } = require('../stop/stop.model');
+      const stops = await Stop.findAll({
+        where: { routeId },
+        order: [['sequenceNumber', 'ASC']]
+      });
+
+      if (stops && stops.length >= 2) {
+        const coordinates = stops.map((s: any) => `${s.longitude},${s.latitude}`).join(';');
+        const url = `http://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson`;
+
+        const response = await axios.get(url);
+        if (response.data && response.data.routes && response.data.routes[0]) {
+          const path = response.data.routes[0].geometry.coordinates.map((coord: [number, number]) => ({
+            latitude: coord[1],
+            longitude: coord[0]
+          }));
+          return path;
+        }
+      }
+    } catch (error) {
+      console.error('OSRM Route Generation Failed:', error);
+      // Fallback to coordinates from DB
+    }
+
+    return await RoutePathCoordinate.findAll({
+      where: { routeId },
+      order: [['sequence', 'ASC']]
+    });
   }
 
   async updateRoute(routeId: string, updateData: any) {

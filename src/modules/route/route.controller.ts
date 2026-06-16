@@ -39,6 +39,16 @@ export class RouteController {
     }
   }
 
+  async getRoutePath(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { routeId } = req.params;
+      const path = await routeService.getRoutePath(routeId);
+      res.status(200).json({ success: true, message: 'Route path retrieved', data: path });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async updateRoute(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { routeId } = req.params;

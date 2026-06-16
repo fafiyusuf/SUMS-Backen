@@ -1,5 +1,6 @@
 import { Bus, Route, RoutePathCoordinate } from '../../modules/models';
 import { LocationData, LocationProvider } from '../../types/LocationProvider';
+import { Bus, RoutePathCoordinate, Stop, Route } from '../../modules/models';
 
 interface CachedPath {
     coordinates: { latitude: number; longitude: number }[];
@@ -7,24 +8,36 @@ interface CachedPath {
     segmentDistances: number[];
 }
 
+interface BusState {
+    distanceTraveled: number;
+    lastUpdate: number;
+    status: 'moving' | 'stopping' | 'stopped' | 'accelerating';
+    stopDurationLeft: number;
+    currentSpeedKmh: number;
+    targetSpeedKmh: number;
+}
+
 export class RouteReplayProvider implements LocationProvider {
     private updateInterval: NodeJS.Timeout | null = null;
-    private busDistances: Map<string, number> = new Map(); // busId (UUID) -> distance traveled in meters
-    private pathCache: Map<string, CachedPath> = new Map(); // routeId (UUID) -> enriched path
+    private busStates: Map<string, BusState> = new Map(); // busId -> extended state
+    private pathCache: Map<string, CachedPath> = new Map(); // routeId -> enriched path
+    private stopCache: Map<string, Stop[]> = new Map(); // routeId -> stops
     private callback: ((data: LocationData) => void) | null = null;
-    private lastUpdate: number = Date.now();
+
+    // Configurable from environment
+    private SIMULATION_UPDATE_MS = Number(process.env.SIMULATION_UPDATE_MS) || 2500;
+    private STOP_DURATION_SECONDS = Number(process.env.STOP_DURATION_SECONDS) || 12;
 
     async start(): Promise<void> {
         if (this.updateInterval) return;
 
-        await this.warmPathCache();
         await this.performStartupValidation();
 
-        console.log('RouteReplayProvider: Starting simulation loop...');
-        this.lastUpdate = Date.now();
+        console.log(`RouteReplayProvider: Starting simulation loop (${this.SIMULATION_UPDATE_MS}ms updates)...`);
+
         this.updateInterval = setInterval(() => {
             this.simulateMovement();
-        }, 1000);
+        }, this.SIMULATION_UPDATE_MS);
     }
 
     async stop(): Promise<void> {
@@ -35,44 +48,66 @@ export class RouteReplayProvider implements LocationProvider {
     }
 
     async getCurrentLocation(_busId: string): Promise<LocationData | null> {
-        return null;
+        return null; // Not needed for replay mode
     }
 
     onLocationUpdate(callback: (data: LocationData) => void): void {
         this.callback = callback;
     }
 
-    private async warmPathCache() {
+    private async getEnrichedPath(routeId: string): Promise<CachedPath | null> {
+        if (this.pathCache.has(routeId)) {
+            return this.pathCache.get(routeId)!;
+        }
+
         try {
-            const allCoords = await RoutePathCoordinate.findAll({
-                order: [['routeId', 'ASC'], ['sequence', 'ASC']]
+            const coords = await RoutePathCoordinate.findAll({
+                where: { routeId },
+                order: [['sequence', 'ASC']]
             });
 
-            this.pathCache.clear();
-            const rawPaths: Map<string, { latitude: number; longitude: number }[]> = new Map();
-
-            for (const coord of allCoords) {
-                if (!rawPaths.has(coord.routeId)) {
-                    rawPaths.set(coord.routeId, []);
-                }
-                rawPaths.get(coord.routeId)!.push({
-                    latitude: Number(coord.latitude),
-                    longitude: Number(coord.longitude)
-                });
+            if (coords.length < 2) {
+                console.warn(`RouteReplayProvider: Route ${routeId} has insufficient coordinates (${coords.length}), skipping simulation.`);
+                return null;
             }
 
-            for (const [routeId, coords] of rawPaths.entries()) {
-                const subdivided = this.subdividePath(coords, 50); // Ensuring points every 50m
-                const { totalDistance, segmentDistances } = this.calculatePathDistances(subdivided);
-                this.pathCache.set(routeId, {
-                    coordinates: subdivided,
-                    totalDistance,
-                    segmentDistances
-                });
-            }
-            console.log(`RouteReplayProvider: Cached and subdivided paths for ${this.pathCache.size} routes.`);
+            const pathCoords = coords.map(c => ({
+                latitude: Number(c.latitude),
+                longitude: Number(c.longitude)
+            }));
+
+            const subdivided = this.subdividePath(pathCoords, 10);
+            const { totalDistance, segmentDistances } = this.calculatePathDistances(subdivided);
+
+            const cachedPath = {
+                coordinates: subdivided,
+                totalDistance,
+                segmentDistances
+            };
+
+            this.pathCache.set(routeId, cachedPath);
+            return cachedPath;
         } catch (error) {
-            console.error('Failed to warm path cache:', error);
+            console.error(`Failed to load path for route ${routeId}:`, error);
+            return null;
+        }
+    }
+
+    private async getRouteStops(routeId: string): Promise<Stop[]> {
+        if (this.stopCache.has(routeId)) {
+            return this.stopCache.get(routeId)!;
+        }
+
+        try {
+            const stops = await Stop.findAll({
+                where: { routeId },
+                order: [['sequenceNumber', 'ASC']]
+            });
+            this.stopCache.set(routeId, stops);
+            return stops;
+        } catch (error) {
+            console.error(`Failed to load stops for route ${routeId}:`, error);
+            return [];
         }
     }
 
@@ -114,7 +149,7 @@ export class RouteReplayProvider implements LocationProvider {
     }
 
     private haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
-        const R = 6371e3; // Earth radius in meters
+        const R = 6371e3;
         const φ1 = lat1 * Math.PI / 180;
         const φ2 = lat2 * Math.PI / 180;
         const Δφ = (lat2 - lat1) * Math.PI / 180;
@@ -130,16 +165,17 @@ export class RouteReplayProvider implements LocationProvider {
 
     private async performStartupValidation() {
         try {
-            const activeBuses = await Bus.count({ where: { status: 'active' } });
-            const totalRoutes = await Route.count();
-            const routesWithPaths = this.pathCache.size;
-
-            console.log('--- RouteReplayProvider Startup Report ---');
-            console.log(`Active Buses: ${activeBuses}`);
-            console.log(`Total Routes: ${totalRoutes}`);
-            console.log(`Routes with simulation paths: ${routesWithPaths}`);
-            console.log(`Routes missing paths: ${totalRoutes - routesWithPaths}`);
-            console.log('------------------------------------------');
+            const activeBuses = await Bus.findAll({
+                where: { status: 'active' },
+                include: [{ model: Route, as: 'route' }]
+            });
+            console.log('--- RouteReplayProvider Startup ---');
+            console.log(`Active Buses for Simulation: ${activeBuses.length}`);
+            activeBuses.forEach(bus => {
+                const route = (bus as any).route;
+                console.log(` - Bus ${bus.registrationNumber}: Route ${route?.name || 'Unassigned'}`);
+            });
+            console.log('-----------------------------------');
         } catch (error) {
             console.error('Startup validation failed:', error);
         }
@@ -147,71 +183,159 @@ export class RouteReplayProvider implements LocationProvider {
 
     private async simulateMovement() {
         try {
+            // Simulate all active buses on routes that have coordinates
+            const activeBuses = await Bus.findAll({
+                where: { status: 'active' },
+                include: [{ model: Route, as: 'route' }]
+            });
+
+            if (activeBuses.length === 0) return;
+
             const now = Date.now();
-            const deltaTime = (now - this.lastUpdate) / 1000; // time in seconds
-            this.lastUpdate = now;
 
-            const buses = await Bus.findAll({ where: { status: 'active' } });
-            if (buses.length === 0) return;
+            for (const bus of activeBuses) {
+                const route = (bus as any).route;
+                if (!route) continue;
 
-            for (const bus of buses) {
-                if (!bus.routeId) continue;
+                let state = this.busStates.get(bus.id);
+                if (!state) {
+                    state = {
+                        distanceTraveled: Math.random() * 500, // Start at random position for variety
+                        lastUpdate: now,
+                        status: 'moving',
+                        stopDurationLeft: 0,
+                        currentSpeedKmh: 35,
+                        targetSpeedKmh: 35 + (Math.random() * 5 - 2.5)
+                    };
+                    this.busStates.set(bus.id, state);
+                }
 
-                let cached = this.pathCache.get(bus.routeId);
-                // Lazy loading logic simplified for brevity - in production keep the DB check
+                const cached = await this.getEnrichedPath(route.id);
+                const stops = await this.getRouteStops(route.id);
                 if (!cached) continue;
 
-                const busSpeedKmh = 40; // Default realistic speed
-                const busSpeedMs = busSpeedKmh / 3.6;
+                const deltaTime = (now - state.lastUpdate) / 1000;
+                state.lastUpdate = now;
 
-                let distanceTraveled = (this.busDistances.get(bus.id) || 0) + (busSpeedMs * deltaTime);
-                if (distanceTraveled > cached.totalDistance) {
-                    distanceTraveled = 0; // Loop back
-                    console.log(`Bus ${bus.id} completed route ${bus.routeId}, looping...`);
+                // 1. Determine Status & Speed
+                let currentSpeedMs = state.currentSpeedKmh / 3.6;
+
+                if (state.status === 'stopped') {
+                    state.stopDurationLeft -= deltaTime;
+                    if (state.stopDurationLeft <= 0) {
+                        state.status = 'accelerating';
+                    }
+                    currentSpeedMs = 0;
+                } else {
+                    const nextStop = this.findNextStop(state.distanceTraveled, stops, cached);
+                    if (nextStop && nextStop.distanceToStop < 30 && state.status !== 'stopping') {
+                        state.status = 'stopping';
+                    }
+
+                    if (state.status === 'stopping') {
+                        state.currentSpeedKmh = Math.max(5, state.currentSpeedKmh - (15 * deltaTime));
+                        if (nextStop && nextStop.distanceToStop < 2) {
+                            state.status = 'stopped';
+                            state.stopDurationLeft = this.STOP_DURATION_SECONDS;
+                            state.currentSpeedKmh = 0;
+                            // Simulate passenger change
+                            await bus.update({ currentPassengers: Math.max(0, (bus.currentPassengers || 0) + Math.floor(Math.random() * 11 - 5)) });
+                        }
+                    } else if (state.status === 'accelerating') {
+                        state.currentSpeedKmh = Math.min(state.targetSpeedKmh, state.currentSpeedKmh + (10 * deltaTime));
+                        if (state.currentSpeedKmh >= state.targetSpeedKmh) {
+                            state.status = 'moving';
+                        }
+                    } else {
+                        if (Math.random() > 0.95) {
+                            state.targetSpeedKmh = 35 + (Math.random() * 10 - 5);
+                        }
+                        if (state.currentSpeedKmh < state.targetSpeedKmh) state.currentSpeedKmh += deltaTime;
+                        if (state.currentSpeedKmh > state.targetSpeedKmh) state.currentSpeedKmh -= deltaTime;
+                    }
+                    currentSpeedMs = state.currentSpeedKmh / 3.6;
                 }
-                this.busDistances.set(bus.id, distanceTraveled);
 
-                // Find position on path
-                const { coordinates, segmentDistances } = cached;
-                let i = 0;
-                while (i < segmentDistances.length - 1 && segmentDistances[i + 1] <= distanceTraveled) {
-                    i++;
+                // 2. Update Position
+                state.distanceTraveled += (currentSpeedMs * deltaTime);
+                if (state.distanceTraveled > cached.totalDistance) {
+                    state.distanceTraveled = 0;
                 }
 
-                const start = coordinates[i];
-                const end = coordinates[i + 1] || start;
-                const segmentStartDist = segmentDistances[i];
-                const segmentEndDist = segmentDistances[i + 1] || (segmentStartDist + 1);
-                const ratio = (distanceTraveled - segmentStartDist) / (segmentEndDist - segmentStartDist);
-
-                const latitude = start.latitude + (end.latitude - start.latitude) * ratio;
-                const longitude = start.longitude + (end.longitude - start.longitude) * ratio;
-
-                const heading = this.calculateHeading(
-                    { lat: start.latitude, lng: start.longitude },
-                    { lat: end.latitude, lng: end.longitude }
-                );
+                // 3. Calculate Coordinates
+                const { latitude, longitude, heading } = this.getPositionOnPath(state.distanceTraveled, cached);
 
                 const locationData: LocationData = {
                     busId: bus.id,
                     latitude,
                     longitude,
-                    speed: busSpeedKmh,
+                    speed: state.currentSpeedKmh,
                     heading,
-                    routeId: bus.routeId,
+                    routeId: route.id,
                     timestamp: new Date().toISOString(),
                     status: 'active',
                     currentPassengers: bus.currentPassengers,
                     capacity: bus.capacity
                 };
 
-                if (this.callback) {
-                    this.callback(locationData);
-                }
+                if (this.callback) this.callback(locationData);
             }
         } catch (error) {
             console.error('RouteReplayProvider simulation error:', error);
         }
+    }
+
+    private findNextStop(dist: number, stops: Stop[], cached: CachedPath) {
+        for (const stop of stops) {
+            const stopPoint = { latitude: Number(stop.latitude), longitude: Number(stop.longitude) };
+            // Find approximate distance of stop on route path
+            const stopDistOnPath = this.findClosestDistanceOnPath(stopPoint, cached);
+
+            if (stopDistOnPath > dist) {
+                return {
+                    stop,
+                    distanceToStop: stopDistOnPath - dist
+                };
+            }
+        }
+        return null;
+    }
+
+    private findClosestDistanceOnPath(point: { latitude: number, longitude: number }, cached: CachedPath): number {
+        let minDist = Infinity;
+        let bestIdx = 0;
+        for (let i = 0; i < cached.coordinates.length; i++) {
+            const d = this.haversine(point.latitude, point.longitude, cached.coordinates[i].latitude, cached.coordinates[i].longitude);
+            if (d < minDist) {
+                minDist = d;
+                bestIdx = i;
+            }
+        }
+        return cached.segmentDistances[bestIdx];
+    }
+
+    private getPositionOnPath(dist: number, cached: CachedPath) {
+        const { coordinates, segmentDistances } = cached;
+        let i = 0;
+        while (i < segmentDistances.length - 1 && segmentDistances[i + 1] <= dist) {
+            i++;
+        }
+
+        const start = coordinates[i];
+        const end = coordinates[i + 1] || start;
+        const segmentStartDist = segmentDistances[i];
+        const segmentEndDist = segmentDistances[i + 1] || (segmentStartDist + 1);
+        const ratio = (dist - segmentStartDist) / (segmentEndDist - segmentStartDist);
+
+        const latitude = start.latitude + (end.latitude - start.latitude) * ratio;
+        const longitude = start.longitude + (end.longitude - start.longitude) * ratio;
+
+        const heading = this.calculateHeading(
+            { lat: start.latitude, lng: start.longitude },
+            { lat: end.latitude, lng: end.longitude }
+        );
+
+        return { latitude, longitude, heading };
     }
 
     private calculateHeading(start: { lat: number, lng: number }, end: { lat: number, lng: number }): number {
