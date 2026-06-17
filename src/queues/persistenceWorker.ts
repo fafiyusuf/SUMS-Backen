@@ -1,7 +1,7 @@
 import { Worker } from 'bullmq';
 import Redis from 'ioredis';
 import config from '../config/env';
-import { GPSCoordinate } from '../modules/models';
+import { GPSCoordinate, Bus } from '../modules/models';
 import { LocationData } from '../types/LocationProvider';
 
 const connectionOptions = {
@@ -52,9 +52,24 @@ async function flushGpsBatch() {
             };
         });
 
-        await GPSCoordinate.bulkCreate(coordinates);
+        // Verify that the target bus IDs actually exist in the database
+        const uniqueBusIds = [...new Set(coordinates.map(c => c.busId))];
+        const existingBuses = await Bus.findAll({
+            where: { id: uniqueBusIds },
+            attributes: ['id']
+        });
+        const existingBusIds = new Set(existingBuses.map(b => b.id));
 
-        // Trim the list after successful write
+        // Filter out coordinates pointing to non-existent buses to avoid foreign key violations
+        const filteredCoordinates = coordinates.filter(c => existingBusIds.has(c.busId));
+
+        if (filteredCoordinates.length > 0) {
+            await GPSCoordinate.bulkCreate(filteredCoordinates);
+        } else {
+            console.log('Skipped database insertion: All coordinates in the batch had invalid or non-existent bus IDs.');
+        }
+
+        // Trim the list after processing (either successful write or discarding invalid records)
         await redis.ltrim(GPS_BATCH_KEY, batchJson.length, -1);
     } catch (error) {
         console.error('Failed to flush GPS batch:', error);

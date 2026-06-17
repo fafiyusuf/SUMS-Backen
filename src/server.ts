@@ -5,7 +5,6 @@ import app from './app';
 import { sequelize } from './config/database';
 import config from './config/env';
 import { initializeAssociations } from './database/connection';
-import './queues/persistenceWorker'; // Start persistence worker
 import logger from './utils/logger';
 import { seedAdamaData } from './utils/seedData';
 import socketServer from './websocket/socketServer';
@@ -39,14 +38,18 @@ async function startServer() {
     console.log('5. Seeding Adama data...');
     await seedAdamaData();
 
-    // 6. Start LocationService
-    console.log('6. Starting LocationService...');
+    // 6. Start persistence worker
+    console.log('6. Starting queues and persistence worker...');
+    await import('./queues/persistenceWorker');
+
+    // 7. Start LocationService
+    console.log('7. Starting LocationService...');
     const { default: locationService } = await import('./services/LocationService');
     await locationService.start();
     logger.info('LocationService started and simulation loop running');
 
-    // 7. Start listening
-    console.log(`7. Attempting to listen on port ${PORT}...`);
+    // 8. Start listening
+    console.log(`8. Attempting to listen on port ${PORT}...`);
     server.listen(PORT, () => {
       console.log(`🚀 SERVER READY ON PORT ${PORT}`);
       logger.info(`Server running on port ${PORT}`);
