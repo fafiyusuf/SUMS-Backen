@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { Bus } from '../bus/bus.model';
 import { Route } from '../route/route.model';
 import { Stop } from '../stop/stop.model';
@@ -27,12 +28,26 @@ export class DriverService {
     }
 
     if (bus.status === 'active') {
-      const error: any = new Error('A trip is already in progress. End the current trip before starting a new one.');
-      error.status = 400;
-      throw error;
+      console.log(`DriverService: Bus ${bus.registrationNumber} is already active. Checking for ongoing trip...`);
+      const activeTrip = await Trip.findOne({
+        where: {
+          busId: bus.id,
+          status: 'ongoing',
+          userId: { [Op.is]: null }
+        }
+      });
+
+      if (activeTrip) {
+        console.log(`DriverService: Ongoing trip ${activeTrip.id} found for bus ${bus.registrationNumber}.`);
+        const error: any = new Error('A trip is already in progress. End the current trip before starting a new one.');
+        error.status = 400;
+        throw error;
+      }
+
+      console.log(`DriverService: No ongoing trip found for active bus ${bus.registrationNumber}. Resetting to inactive.`);
+      await bus.update({ status: 'inactive' });
     }
 
-    // Find the first stop of the route to mark as starting point
     const routeId: string = bus.routeId as string;
     const firstStop = await Stop.findOne({
       where: { routeId },
@@ -40,31 +55,39 @@ export class DriverService {
     });
 
     if (!firstStop) {
+      console.warn(`DriverService: No stops found for route ${routeId}`);
       const error: any = new Error('No stops found for the assigned route.');
       error.status = 400;
       throw error;
     }
 
+    console.log(`DriverService: Starting trip for bus ${bus.registrationNumber} on route ${routeId}...`);
     await bus.update({ status: 'active' });
 
-    // Create a Trip record to represent this driver's session
-    const trip = await Trip.create({
-      userId: null, // Indicates a driver session/bus trip
-      busId: bus.id,
-      routeId: bus.routeId,
-      startStopId: firstStop.id,
-      startTime: new Date(),
-      fare: 0,
-      status: 'ongoing'
-    });
-
-    return {
-      id: trip.id,
-      busId: bus.id,
-      routeId: bus.routeId,
-      status: 'active',
-      startTime: trip.startTime
-    };
+    try {
+      const trip = await Trip.create({
+        userId: null,
+        busId: bus.id,
+        routeId: bus.routeId as string,
+        startStopId: firstStop.id,
+        startTime: new Date(),
+        fare: 0,
+        status: 'ongoing'
+      });
+      console.log(`DriverService: Trip ${trip.id} created successfully.`);
+      return {
+        id: trip.id,
+        busId: bus.id,
+        routeId: bus.routeId,
+        status: 'active',
+        startTime: trip.startTime
+      };
+    } catch (createError) {
+      console.error('DriverService: Failed to create Trip record:', createError);
+      // Rollback bus status if trip creation fails
+      await bus.update({ status: 'inactive' });
+      throw createError;
+    }
   }
 
   /**
