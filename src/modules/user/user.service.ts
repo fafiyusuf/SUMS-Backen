@@ -23,10 +23,15 @@ export class UserService {
     return userData;
   }
 
-  async getAllUsers(page: number, limit: number) {
+  async getAllUsers(page: number, limit: number, role?: string) {
     const offset = (page - 1) * limit;
+    const where: any = {};
+    if (role) {
+      where.role = role;
+    }
 
     const { count, rows } = await User.findAndCountAll({
+      where,
       attributes: { exclude: ['password'] },
       offset,
       limit,
@@ -120,7 +125,7 @@ export class UserService {
       }
 
       await transaction.commit();
-      
+
       const userData = user.toJSON();
       delete (userData as any).password;
       return userData;
@@ -128,6 +133,26 @@ export class UserService {
       await transaction.rollback();
       throw error;
     }
+  }
+
+  async getUserSummary() {
+    const total = await User.count();
+
+    // Role distribution
+    const admins = await User.count({ where: { role: 'admin' } });
+    const drivers = await User.count({ where: { role: 'driver' } });
+    const passengers = await User.count({ where: { role: 'passenger' } });
+
+    // Status summary
+    const active = await User.count({ where: { status: 'active' } });
+    const inactive = await User.count({ where: { status: 'inactive' } });
+    const suspended = await User.count({ where: { status: 'suspended' } });
+
+    return {
+      total,
+      roles: { admin: admins, driver: drivers, passenger: passengers },
+      status: { active, inactive, suspended }
+    };
   }
 }
 

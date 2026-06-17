@@ -41,10 +41,10 @@ export class AnalyticsService {
         // Assuming PostgreSQL for this project based on standard stack
         const peakHours = await Trip.findAll({
             attributes: [
-                [literal('EXTRACT(HOUR FROM "startTime")'), 'hour'],
+                [literal('EXTRACT(HOUR FROM "start_time")'), 'hour'],
                 [fn('COUNT', col('id')), 'count']
             ],
-            group: [literal('EXTRACT(HOUR FROM "startTime")') as any],
+            group: [literal('EXTRACT(HOUR FROM "start_time")') as any],
             order: [[literal('count'), 'DESC']]
         });
 
@@ -58,26 +58,27 @@ export class AnalyticsService {
         const efficiency = await Trip.findAll({
             where: { status: 'completed' },
             attributes: [
-                'routeId',
-                [fn('AVG', literal('EXTRACT(EPOCH FROM ("endTime" - "startTime")) / 60')), 'avgActualDuration'],
+                'route_id',
+                [fn('AVG', literal('EXTRACT(EPOCH FROM ("end_time" - "start_time")) / 60')), 'avgActualDuration'],
             ],
             include: [
                 {
                     model: Route,
+                    as: 'route',
                     attributes: ['name', 'estimatedDuration']
                 }
             ],
-            group: ['routeId', 'Route.id', 'Route.name', 'Route.estimatedDuration'],
+            group: ['route_id', 'route.id', 'route.name', 'route.estimated_duration'],
             raw: true,
             nest: true
         });
 
         return efficiency.map((e: any) => ({
-            routeId: e.routeId,
-            routeName: e.Route.name,
-            estimatedDuration: e.Route.estimatedDuration,
+            routeId: e.route_id,
+            routeName: e.route.name,
+            estimatedDuration: e.route.estimated_duration,
             avgActualDuration: parseFloat(e.avgActualDuration).toFixed(2),
-            delayIndex: (parseFloat(e.avgActualDuration) / e.Route.estimatedDuration).toFixed(2)
+            delayIndex: (parseFloat(e.avgActualDuration) / e.route.estimated_duration).toFixed(2)
         }));
     }
 

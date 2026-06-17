@@ -26,6 +26,7 @@ export const getAllUsersSchema = z.object({
   query: z.object({
     page: z.string().regex(/^\d+$/).optional().transform(val => val ? parseInt(val, 10) : 1),
     limit: z.string().regex(/^\d+$/).optional().transform(val => val ? parseInt(val, 10) : 10),
+    role: z.enum(['admin', 'driver', 'passenger']).optional(),
   })
 });
 

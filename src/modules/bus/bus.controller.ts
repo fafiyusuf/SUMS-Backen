@@ -79,6 +79,15 @@ export class BusController {
       next(error);
     }
   }
+
+  async getBusSummary(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const summary = await busService.getBusSummary();
+      res.status(200).json({ success: true, message: 'Bus summary retrieved', data: summary });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export default new BusController();

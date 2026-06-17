@@ -185,6 +185,20 @@ export class BusService {
       throw error;
     }
   }
+
+  async getBusSummary() {
+    const total = await Bus.count();
+    const active = await Bus.count({ where: { status: 'active' } });
+    const inactive = await Bus.count({ where: { status: 'inactive' } });
+    const maintenance = await Bus.count({ where: { status: 'maintenance' } });
+
+    return {
+      total,
+      active,
+      inactive,
+      maintenance
+    };
+  }
 }
 
 export default new BusService();

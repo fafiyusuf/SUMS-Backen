@@ -93,10 +93,30 @@ router.use(requireRole('admin'));
  *           type: integer
  *           default: 10
  *         description: Items per page
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *           enum: [admin, driver, passenger]
+ *         description: Filter by role
  *     responses:
  *       200:
  *         description: List of users
  */
+/**
+ * @swagger
+ * /users/summary:
+ *   get:
+ *     summary: Get user summary statistics (Admin)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User summary
+ */
+router.get('/summary', userController.getUserSummary);
+
 router.get('/', validate(getAllUsersSchema), userController.getAllUsers);
 
 /**

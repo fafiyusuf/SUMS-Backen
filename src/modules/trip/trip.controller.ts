@@ -53,7 +53,22 @@ export class TripController {
       const trips = await Trip.findAll({ where: { userId }, limit, offset, order: [['createdAt', 'DESC']] });
       const total = await Trip.count({ where: { userId } });
 
-      res.status(200).json({ success: true, message: 'Trips retrieved', data: { trips, total, page, limit } });
+      const formattedTrips = trips.map((trip: any) => {
+        const data = trip.toJSON();
+        return {
+          ...data,
+          startTime: data.startTime || data.start_time,
+          endTime: data.endTime || data.end_time,
+          routeId: data.routeId || data.route_id,
+          busId: data.busId || data.bus_id,
+          userId: data.userId || data.user_id,
+          startStopId: data.startStopId || data.start_stop_id,
+          endStopId: data.endStopId || data.end_stop_id,
+          isSimulation: data.isSimulation || data.is_simulation
+        };
+      });
+
+      res.status(200).json({ success: true, message: 'Trips retrieved', data: { trips: formattedTrips, total, page, limit } });
     } catch (error) {
       next(error);
     }
@@ -69,7 +84,22 @@ export class TripController {
       const trips = await Trip.findAll({ where: { userId }, limit, offset, order: [['createdAt', 'DESC']] });
       const total = await Trip.count({ where: { userId } });
 
-      res.status(200).json({ success: true, message: 'History retrieved', data: { trips, total, page, limit } });
+      const formattedTrips = trips.map((trip: any) => {
+        const data = trip.toJSON();
+        return {
+          ...data,
+          startTime: data.startTime || data.start_time,
+          endTime: data.endTime || data.end_time,
+          routeId: data.routeId || data.route_id,
+          busId: data.busId || data.bus_id,
+          userId: data.userId || data.user_id,
+          startStopId: data.startStopId || data.start_stop_id,
+          endStopId: data.endStopId || data.end_stop_id,
+          isSimulation: data.isSimulation || data.is_simulation
+        };
+      });
+
+      res.status(200).json({ success: true, message: 'History retrieved', data: { trips: formattedTrips, total, page, limit } });
     } catch (error) {
       next(error);
     }
@@ -275,13 +305,36 @@ export class TripController {
   async getAllTrips(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
+      const limit = parseInt(req.query.limit as string) || 100; // Increased default limit for monitoring
       const offset = (page - 1) * limit;
 
-      const trips = await Trip.findAll({ limit, offset, order: [['createdAt', 'DESC']] });
+      const trips = await Trip.findAll({
+        limit,
+        offset,
+        order: [['createdAt', 'DESC']],
+        include: [
+          { model: Bus, as: 'bus', attributes: ['id', 'registrationNumber', 'capacity'] },
+          { model: Route, as: 'route', attributes: ['id', 'name'] }
+        ]
+      });
       const total = await Trip.count();
 
-      res.status(200).json({ success: true, message: 'All trips retrieved', data: { trips, total, page, limit } });
+      const formattedTrips = trips.map((trip: any) => {
+        const data = trip.toJSON();
+        return {
+          ...data,
+          startTime: data.startTime || data.start_time,
+          endTime: data.endTime || data.end_time,
+          routeId: data.routeId || data.route_id,
+          busId: data.busId || data.bus_id,
+          userId: data.userId || data.user_id,
+          startStopId: data.startStopId || data.start_stop_id,
+          endStopId: data.endStopId || data.end_stop_id,
+          isSimulation: data.isSimulation || data.is_simulation
+        };
+      });
+
+      res.status(200).json({ success: true, message: 'All trips retrieved', data: { trips: formattedTrips, total, page, limit } });
     } catch (error) {
       next(error);
     }

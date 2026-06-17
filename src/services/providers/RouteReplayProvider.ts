@@ -1,6 +1,5 @@
-import { Bus, Route, RoutePathCoordinate } from '../../modules/models';
+import { Bus, Route, RoutePathCoordinate, Stop } from '../../modules/models';
 import { LocationData, LocationProvider } from '../../types/LocationProvider';
-import { Bus, RoutePathCoordinate, Stop, Route } from '../../modules/models';
 
 interface CachedPath {
     coordinates: { latitude: number; longitude: number }[];

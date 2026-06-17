@@ -48,7 +48,9 @@ export class UserController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-      const result = await userService.getAllUsers(page, limit);
+      const role = req.query.role as string | undefined;
+
+      const result = await userService.getAllUsers(page, limit, role);
       res.status(200).json({ success: true, data: result });
     } catch (error: any) {
       res.status(500).json({ success: false, message: 'Server Error', error });
@@ -122,6 +124,15 @@ export class UserController {
         return;
       }
       res.status(500).json({ success: false, message: error.message || 'Server Error', error });
+    }
+  }
+
+  async getUserSummary(_req: Request, res: Response): Promise<void> {
+    try {
+      const summary = await userService.getUserSummary();
+      res.status(200).json({ success: true, message: 'User summary retrieved', data: summary });
+    } catch (error: any) {
+      res.status(500).json({ success: false, message: 'Server Error', error });
     }
   }
 }

@@ -92,6 +92,20 @@ router.post('/', verifyToken, requireRole('admin'), validate(createBusSchema), b
  *       200:
  *         description: List of buses
  */
+/**
+ * @swagger
+ * /buses/summary:
+ *   get:
+ *     summary: Get bus fleet summary statistics
+ *     tags: [Buses]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Bus fleet summary
+ */
+router.get('/summary', verifyToken, requireRole('admin'), busController.getBusSummary);
+
 router.get('/', validate(getAllBusesSchema), busController.getAllBuses);
 
 /**
