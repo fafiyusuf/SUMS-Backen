@@ -4,17 +4,17 @@ import { sequelize } from '../../config/database';
 import '../../modules/models';
 
 import {
-    Bus,
-    GPSCoordinate,
-    Incident,
-    Route,
-    Schedule,
-    SmartCard,
-    Stop,
-    Transaction,
-    Trip,
-    User,
-    Wallet
+  Bus,
+  GPSCoordinate,
+  Incident,
+  Route,
+  Schedule,
+  SmartCard,
+  Stop,
+  Transaction,
+  Trip,
+  User,
+  Wallet
 } from '../../modules/models';
 
 const PASSWORD_HASH_ADMIN123 =
@@ -277,7 +277,7 @@ async function seedAdama(): Promise<void> {
       routeId: b.routeId,
       capacity: b.capacity,
       currentPassengers: 0,
-      status: 'active' as const
+      status: 'inactive' as const
     })),
     { validate: true, returning: true }
   );

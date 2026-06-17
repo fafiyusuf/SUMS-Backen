@@ -16,6 +16,9 @@ export const errorHandler = (
   const message = err.message || 'Internal server error';
 
   logger.error(`Error: ${status} - ${message}`);
+  if (status === 500) {
+    console.error('SERVER ERROR:', err);
+  }
 
   res.status(status).json({
     success: false,

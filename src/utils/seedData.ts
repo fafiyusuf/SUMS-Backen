@@ -63,6 +63,28 @@ export const seedAdamaData = async () => {
                     { name: 'Mebrat Hail', lat: 8.5367, lng: 39.2712 },
                     { name: 'Medhanialem Kebele 05', lat: 8.5312, lng: 39.2785 }
                 ]
+            },
+            {
+                name: 'Old Bus Station → Kebele 04',
+                startPoint: 'Old Bus Station',
+                endPoint: 'Kebele 04',
+                distance: 8.1,
+                estimatedDuration: 26,
+                routeType: 'operational' as const,
+                simulationEnabled: true,
+                status: 'active' as const,
+                coordinates: [
+                    { lat: 8.5414, lng: 39.2689 },
+                    { lat: 8.5400, lng: 39.2720 },
+                    { lat: 8.5380, lng: 39.2750 },
+                    { lat: 8.5360, lng: 39.2780 },
+                    { lat: 8.5340, lng: 39.2810 },
+                ],
+                stops: [
+                    { name: 'Old Bus Station', lat: 8.5414, lng: 39.2689 },
+                    { name: 'Shewa Dabo', lat: 8.5380, lng: 39.2750 },
+                    { name: 'Kebele 04', lat: 8.5340, lng: 39.2810 }
+                ]
             }
         ];
 
@@ -123,7 +145,8 @@ export const seedAdamaData = async () => {
             // 3. Ensure a unique Driver and Bus exists for each route
             const busRegMap: Record<string, string> = {
                 'Adama Bus Terminal → ASTU': 'ET-101',
-                'Posta → Medhanialem': 'ET-102'
+                'Posta → Medhanialem': 'ET-102',
+                'Old Bus Station → Kebele 04': 'OR-3-12045'
             };
             const busReg = busRegMap[route.name];
 
@@ -156,7 +179,7 @@ export const seedAdamaData = async () => {
                     routeId: route.id,
                     capacity: 50,
                     currentPassengers: 0,
-                    status: 'active'
+                    status: 'inactive'
                 }
             });
             if (busCreated) console.log(`Seeded bus: ${bus.registrationNumber} for ${route.name}`);
