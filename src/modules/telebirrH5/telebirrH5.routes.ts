@@ -3,7 +3,7 @@ import validate from '../../middleware/validate';
 import telebirrH5Controller from './telebirrH5.controller';
 import { preOrderSchema, refundSchema } from './telebirrH5.schema';
 
-const router = express.Router();
+const router: express.IRouter = express.Router();
 
 /**
  * @swagger

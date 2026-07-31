@@ -12,7 +12,7 @@ import {
     createUserSchema
 } from './user.schema';
 
-const router = express.Router();
+const router: express.IRouter = express.Router();
 
 /**
  * @swagger

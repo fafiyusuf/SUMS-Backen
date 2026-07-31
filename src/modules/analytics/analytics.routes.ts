@@ -3,7 +3,7 @@ import verifyToken from '../../middleware/authMiddleware';
 import requireRole from '../../middleware/roleMiddleware';
 import analyticsController from './analytics.controller';
 
-const router = express.Router();
+const router: express.IRouter = express.Router();
 
 /**
  * @swagger

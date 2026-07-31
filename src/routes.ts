@@ -17,8 +17,9 @@ import telebirrH5Routes from './modules/telebirrH5/telebirrH5.routes';
 import tripRoutes from './modules/trip/trip.routes';
 import userRoutes from './modules/user/user.routes';
 import walletRoutes from './modules/wallet/wallet.routes';
+import paymentRoutes from './modules/payment/payment.routes';
 
-const router = express.Router();
+const router: express.IRouter = express.Router();
 
 router.use('/auth', authLimiter, authRoutes);
 router.use('/analytics', analyticsRoutes);
@@ -37,5 +38,6 @@ router.use('/wallet', walletRoutes);
 router.use('/schedule', scheduleRoutes);
 router.use('/tap', tapRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/payments', paymentRoutes);
 
 export default router;

@@ -3,7 +3,7 @@ import validate from '../../middleware/validate';
 import telebirrController from './telebirr.controller';
 import { createCheckoutUrlSchema } from './telebirr.schema';
 
-const router = express.Router();
+const router: express.IRouter = express.Router();
 
 /**
  * @swagger

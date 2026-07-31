@@ -6,7 +6,7 @@ import { validate } from '../../middleware/validate';
 import authController from './auth.controller';
 import { createDriverSchema, loginSchema, registerSchema } from './auth.schema';
 
-const router = express.Router();
+const router: express.IRouter = express.Router();
 
 /**
  * @swagger

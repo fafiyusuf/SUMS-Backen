@@ -2,7 +2,7 @@ import express from 'express';
 import verifyToken from '../../middleware/authMiddleware';
 import driverController from './driver.controller';
 
-const router = express.Router();
+const router: express.IRouter = express.Router();
 
 /**
  * @swagger

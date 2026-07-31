@@ -13,6 +13,7 @@ export { User } from '../user/user.model';
 export { RoutePathCoordinate } from '../wallet/RoutePathCoordinate';
 export { Transaction } from '../wallet/transaction.model';
 export { Wallet } from '../wallet/wallet.model';
+export { TelebirrPayment } from '../payment/telebirrPayment.model';
 
 // Import models for associations
 import { Bus } from '../bus/bus.model';
@@ -28,6 +29,7 @@ import { Trip } from '../trip/trip.model';
 import { User } from '../user/user.model';
 import { Transaction } from '../wallet/transaction.model';
 import { Wallet } from '../wallet/wallet.model';
+import { TelebirrPayment } from '../payment/telebirrPayment.model';
 
 // --- Define associations ---
 
@@ -90,5 +92,9 @@ Tap.belongsTo(Stop, { foreignKey: 'stopId', as: 'stop' });
 
 // Settings
 SystemSetting.belongsTo(User, { foreignKey: 'updatedBy', as: 'admin' });
+
+// TelebirrPayment associations
+TelebirrPayment.belongsTo(User, { foreignKey: 'userId', as: 'payer' });
+User.hasMany(TelebirrPayment, { foreignKey: 'userId', as: 'telebirrPayments' });
 
 export { sequelize } from '../../config/database';

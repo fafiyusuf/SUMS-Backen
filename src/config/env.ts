@@ -35,8 +35,11 @@ export const config = {
   logging: {
     level: process.env.LOG_LEVEL || 'debug',
     format: process.env.LOG_FORMAT || 'json'
+  },
+  receipt: {
+    receiverName: process.env.TELEBIRR_RECEIVER_NAME || '',
+    receiverPhone: process.env.TELEBIRR_RECEIVER_PHONE || ''
   }
 };
 
 export default config;
- 

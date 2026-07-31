@@ -11,7 +11,7 @@ import {
     updateStopSequenceSchema
 } from './stop.schema';
 
-const router = express.Router();
+const router: express.IRouter = express.Router();
 
 /**
  * @swagger

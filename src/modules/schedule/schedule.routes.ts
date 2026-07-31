@@ -5,7 +5,7 @@ import requireRole from '@/middleware/roleMiddleware';
 import { validate } from '@/middleware/validate';
 import { createScheduleSchema, updateScheduleSchema, getRouteSchedulesSchema, deleteScheduleSchema } from './schedule.schema';
 
-const router = express.Router();
+const router: express.IRouter = express.Router();
 
 /**
  * @swagger

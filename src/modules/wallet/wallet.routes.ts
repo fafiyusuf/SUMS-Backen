@@ -11,7 +11,7 @@ import {
     topupSchema
 } from './wallet.schema';
 
-const router = express.Router();
+const router: express.IRouter = express.Router();
 
 /**
  * @swagger

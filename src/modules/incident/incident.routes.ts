@@ -9,7 +9,7 @@ import {
     updateIncidentStatusSchema
 } from './incident.schema';
 
-const router = express.Router();
+const router: express.IRouter = express.Router();
 
 /**
  * @swagger
