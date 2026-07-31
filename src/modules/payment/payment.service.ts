@@ -19,12 +19,10 @@ function createError(status: number, message: string): Error & { status: number 
     return err;
 }
 
-/** Lowercase + collapse whitespace for name comparison */
 function normalizeName(name: string): string {
     return name.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
-/** Extract {invoiceNo} from a valid Telebirr receipt URL. Returns null if invalid. */
 function extractInvoiceNo(receiptUrl: string): string | null {
     if (!receiptUrl.startsWith(RECEIPT_BASE_URL)) return null;
     const part = receiptUrl.slice(RECEIPT_BASE_URL.length);
@@ -32,7 +30,6 @@ function extractInvoiceNo(receiptUrl: string): string | null {
     return part;
 }
 
-/** Flatten a Sequelize / generic error to a human-readable string. */
 function dbErrMsg(err: any): string {
     return (
         (err.message && err.message.trim()) ||
@@ -62,7 +59,6 @@ async function fetchAndParseReceipt(receiptUrl: string): Promise<ReceiptData> {
 
     const $ = cheerio.load(response.data);
 
-    // Build a map of label → value from all <tr><td>label</td><td>value</td></tr> rows
     const dataMap: Record<string, string> = {};
     $('tr').each((_i, row) => {
         const cells = $(row).find('td');
@@ -73,7 +69,6 @@ async function fetchAndParseReceipt(receiptUrl: string): Promise<ReceiptData> {
         }
     });
 
-    // Fallback: scan all elements for a label match and grab the next sibling
     function findByLabel(label: string): string {
         if (dataMap[label.toLowerCase()]) return dataMap[label.toLowerCase()];
         let found = '';
@@ -127,6 +122,12 @@ async function fetchAndParseReceipt(receiptUrl: string): Promise<ReceiptData> {
 
 // ─── Main service function ───────────────────────────────────────────────────
 
+export interface VerifyReceiptInput {
+    receiptUrl: string;
+    /** Authenticated user ID from JWT */
+    userId: string;
+}
+
 export interface VerifyReceiptResult {
     invoiceNo: string;
     sender: string;
@@ -134,27 +135,30 @@ export interface VerifyReceiptResult {
     newBalance: number;
 }
 
-export async function verifyReceipt(receiptUrl: string): Promise<VerifyReceiptResult> {
+export async function verifyReceipt(input: VerifyReceiptInput): Promise<VerifyReceiptResult> {
+    const { receiptUrl, userId } = input;
+
     // Step 1: Validate URL + extract invoice number
     const invoiceNo = extractInvoiceNo(receiptUrl);
     if (!invoiceNo) {
         throw createError(400, 'Invalid receipt URL. Only https://transactioninfo.ethiotelecom.et/receipt/<invoiceNo> is accepted.');
     }
 
-    // Step 2: Check for duplicate invoice in DB
+    // Step 2: Check for duplicate invoice
     let existing: TelebirrPayment | null;
     try {
         existing = await TelebirrPayment.findOne({ where: { invoiceNo } });
     } catch (dbErr: any) {
         const msg = dbErrMsg(dbErr);
-        logger.error(`[PaymentService] Step2 DB error: ${msg}`, { original: dbErr.original });
+        logger.error(`[PaymentService] Step2 DB error (${dbErr.name}): ${msg}`);
+        console.error('[PaymentService] Step2 raw error:', dbErr);
         throw createError(500, `Database error while checking for duplicate receipt: ${msg}`);
     }
     if (existing) {
         throw createError(409, 'Receipt already used.');
     }
 
-    // Steps 3 & 4: Fetch and parse receipt HTML
+    // Step 3 & 4: Fetch and parse receipt HTML
     let receipt: ReceiptData;
     try {
         receipt = await fetchAndParseReceipt(receiptUrl);
@@ -178,7 +182,6 @@ export async function verifyReceipt(receiptUrl: string): Promise<VerifyReceiptRe
     if (!expectedName || !expectedPhone) {
         throw createError(500, 'Receiver credentials (TELEBIRR_RECEIVER_NAME / TELEBIRR_RECEIVER_PHONE) are not configured.');
     }
-
     if (normalizeName(creditedPartyName) !== normalizeName(expectedName)) {
         throw createError(400, `Receiver name mismatch. Expected "${expectedName}", got "${creditedPartyName}".`);
     }
@@ -186,32 +189,35 @@ export async function verifyReceipt(receiptUrl: string): Promise<VerifyReceiptRe
         throw createError(400, `Receiver account mismatch. Expected "${expectedPhone}", got "${creditedPartyAccount}".`);
     }
 
-    // Step 7: Find the sender user by fullName (case+whitespace insensitive)
-    let allUsers: User[];
+    // Step 7: Load the authenticated user (no full-table scan)
+    let user: User | null;
     try {
-        allUsers = await User.findAll({ attributes: ['id', 'fullName'] });
+        user = await User.findByPk(userId, { attributes: ['id', 'fullName'] });
     } catch (dbErr: any) {
         const msg = dbErrMsg(dbErr);
-        logger.error(`[PaymentService] Step7 DB error: ${msg}`);
-        throw createError(500, `Database error while looking up card holder: ${msg}`);
+        logger.error(`[PaymentService] User lookup DB error (${dbErr.name}): ${msg}`);
+        throw createError(500, `Database error while loading user: ${msg}`);
+    }
+    if (!user) {
+        throw createError(404, 'Authenticated user not found in database.');
     }
 
-    const normalizedPayer = normalizeName(payerName);
-    const matchedUser = allUsers.find(u => normalizeName(u.fullName) === normalizedPayer);
-    if (!matchedUser) {
-        throw createError(404, 'Card holder not found.');
+    // Verify the payer name on the receipt matches the authenticated user
+    if (normalizeName(payerName) !== normalizeName(user.fullName)) {
+        throw createError(400, `Receipt payer name "${payerName}" does not match your account name "${user.fullName}".`);
     }
 
+    // Load the user's wallet
     let wallet: Wallet | null;
     try {
-        wallet = await Wallet.findOne({ where: { userId: matchedUser.id } });
+        wallet = await Wallet.findOne({ where: { userId } });
     } catch (dbErr: any) {
         const msg = dbErrMsg(dbErr);
-        logger.error(`[PaymentService] Wallet lookup DB error: ${msg}`);
-        throw createError(500, `Database error while looking up wallet: ${msg}`);
+        logger.error(`[PaymentService] Wallet lookup DB error (${dbErr.name}): ${msg}`);
+        throw createError(500, `Database error while loading wallet: ${msg}`);
     }
     if (!wallet) {
-        throw createError(404, 'Wallet not found for card holder.');
+        throw createError(404, 'Wallet not found for your account.');
     }
 
     // Step 8: Calculate credit (total - 2 ETB service fee, min 0)
@@ -236,7 +242,7 @@ export async function verifyReceipt(receiptUrl: string): Promise<VerifyReceiptRe
                 creditedAmount,
                 status: paymentStatus,
                 verifiedAt: new Date(),
-                userId: matchedUser.id
+                userId
             },
             { transaction: t }
         );
@@ -248,10 +254,9 @@ export async function verifyReceipt(receiptUrl: string): Promise<VerifyReceiptRe
             throw createError(409, 'Receipt already used.');
         }
         const msg = dbErrMsg(err);
-        logger.error(`[PaymentService] Transaction error: ${msg}`, { original: err.original });
+        logger.error(`[PaymentService] Transaction error (${err.name}): ${msg}`, { original: err.original });
         throw createError(500, `Failed to process payment: ${msg}`);
     }
 
-    // Step 11: Return success
     return { invoiceNo, sender: payerName, creditedAmount, newBalance };
 }

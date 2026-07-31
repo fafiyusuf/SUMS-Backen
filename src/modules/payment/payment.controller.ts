@@ -1,17 +1,24 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthRequest } from '../../middleware/authMiddleware';
 import * as paymentService from './payment.service';
 import logger from '../../utils/logger';
 
-export async function verifyReceipt(req: Request, res: Response): Promise<void> {
+export async function verifyReceipt(req: AuthRequest, res: Response): Promise<void> {
     try {
         const { receiptUrl } = req.body as { receiptUrl?: string };
+        const userId = req.user?.userId;
 
         if (!receiptUrl || typeof receiptUrl !== 'string' || !receiptUrl.trim()) {
             res.status(400).json({ success: false, message: 'receiptUrl is required.' });
             return;
         }
 
-        const result = await paymentService.verifyReceipt(receiptUrl.trim());
+        if (!userId) {
+            res.status(401).json({ success: false, message: 'Authentication required.' });
+            return;
+        }
+
+        const result = await paymentService.verifyReceipt({ receiptUrl: receiptUrl.trim(), userId });
 
         res.status(200).json({
             success: true,
@@ -25,8 +32,6 @@ export async function verifyReceipt(req: Request, res: Response): Promise<void> 
         });
     } catch (err: any) {
         const status: number = err.status || 500;
-
-        // Sequelize errors often have an empty .message; dig into .original for the real cause
         const message: string =
             (err.message && err.message.trim()) ||
             (err.original?.message && err.original.message.trim()) ||
@@ -38,8 +43,7 @@ export async function verifyReceipt(req: Request, res: Response): Promise<void> 
             name: err.name,
             message: err.message,
             original: err.original?.message,
-            status: err.status,
-            stack: err.stack
+            status: err.status
         });
 
         if (status === 409) {

@@ -1,4 +1,5 @@
-import { Router, IRouter } from 'express';
+import { IRouter, Router } from 'express';
+import verifyToken from '../../middleware/authMiddleware';
 import { verifyReceipt } from './payment.controller';
 
 const router: IRouter = Router();
@@ -14,8 +15,10 @@ const router: IRouter = Router();
  * @swagger
  * /payments/verify:
  *   post:
- *     summary: Verify a Telebirr receipt and credit sender's wallet
+ *     summary: Verify a Telebirr receipt and credit the authenticated user's wallet
  *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -61,7 +64,7 @@ const router: IRouter = Router();
  *                       type: number
  *                       example: 540
  *       400:
- *         description: Invalid receipt URL, payment not completed, or receiver mismatch
+ *         description: Invalid receipt URL, payment not completed, receiver mismatch, or payer name does not match account
  *         content:
  *           application/json:
  *             schema:
@@ -72,20 +75,11 @@ const router: IRouter = Router();
  *                   example: false
  *                 message:
  *                   type: string
- *                   example: "Payment is not completed. Status: Pending"
+ *                   example: 'Receipt payer name "JOHN DOE" does not match your account name "Jane Doe".'
+ *       401:
+ *         description: Missing or invalid JWT token
  *       404:
- *         description: Card holder (payer) not found in the database
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: Card holder not found.
+ *         description: User or wallet not found
  *       409:
  *         description: Receipt has already been used
  *         content:
@@ -100,10 +94,10 @@ const router: IRouter = Router();
  *                   type: string
  *                   example: Receipt already used.
  *       422:
- *         description: Required fields missing from receipt page
+ *         description: Required fields could not be extracted from receipt page
  *       502:
  *         description: Failed to fetch receipt from Telebirr
  */
-router.post('/verify', verifyReceipt);
+router.post('/verify', verifyToken, verifyReceipt);
 
 export default router;
