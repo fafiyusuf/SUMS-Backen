@@ -58,30 +58,73 @@ async function fetchAndParseReceipt(receiptUrl: string): Promise<ReceiptData> {
     });
 
     const $ = cheerio.load(response.data);
-
     const dataMap: Record<string, string> = {};
+
+    // 1. Process key-value rows (must have at least 2 cells and no nested tables)
     $('tr').each((_i: number, row: any) => {
-        const cells = $(row).find('td');
+        if ($(row).find('table').length > 0) return;
+        const cells = $(row).find('td, th');
         if (cells.length >= 2) {
-            const label = $(cells[0]).text().trim();
-            const value = $(cells[1]).text().trim();
-            if (label) dataMap[label.toLowerCase()] = value;
+            // Label is the second-to-last cell, value is the last cell
+            const label = $(cells[cells.length - 2]).text().trim().toLowerCase();
+            const value = $(cells[cells.length - 1]).text().trim();
+            if (label) {
+                dataMap[label] = value;
+            }
         }
     });
 
-    function findByLabel(label: string): string {
-        if (dataMap[label.toLowerCase()]) return dataMap[label.toLowerCase()];
-        let found = '';
-        $('td, th, dt, dd, span, p, div').each((_i: number, el: any) => {
-            if ($(el).text().trim().toLowerCase() === label.toLowerCase()) {
-                const next = $(el).next();
-                if (next.length) { found = next.text().trim(); return false as any; }
-                const parentNext = $(el).parent().next();
-                if (parentNext.length) { found = parentNext.text().trim(); return false as any; }
-            }
-            return undefined;
+    // 2. Process column tables specifically (like the Invoice details table)
+    $('table').each((_tableIdx: number, table: any) => {
+        if ($(table).find('table').length > 0) return;
+        
+        const rows = $(table).find('tr');
+        let invoiceColIdx = -1;
+        let headerRowIdx = -1;
+        
+        rows.each((rowIdx: number, row: any) => {
+            const cells = $(row).find('td, th');
+            cells.each((colIdx: number, cell: any) => {
+                const text = $(cell).text().trim().toLowerCase();
+                if (text.includes('invoice no')) {
+                    invoiceColIdx = colIdx;
+                    headerRowIdx = rowIdx;
+                }
+            });
         });
-        return found;
+        
+        if (invoiceColIdx !== -1 && headerRowIdx !== -1 && headerRowIdx < rows.length - 1) {
+            const valueRow = rows[headerRowIdx + 1];
+            const valueCells = $(valueRow).find('td');
+            if (valueCells.length > invoiceColIdx) {
+                dataMap['invoice no'] = $(valueCells[invoiceColIdx]).text().trim();
+            }
+            
+            const headerCells = $(rows[headerRowIdx]).find('td, th');
+            headerCells.each((colIdx: number, headerEl: any) => {
+                const headerText = $(headerEl).text().trim().toLowerCase();
+                if (headerText.includes('settled amount')) {
+                    if (valueCells.length > colIdx) {
+                        dataMap['settled amount'] = $(valueCells[colIdx]).text().trim();
+                    }
+                }
+                if (headerText.includes('payment date')) {
+                    if (valueCells.length > colIdx) {
+                        dataMap['payment date'] = $(valueCells[colIdx]).text().trim();
+                    }
+                }
+            });
+        }
+    });
+
+    function findByLabel(targetLabel: string): string {
+        const target = targetLabel.toLowerCase();
+        for (const [key, val] of Object.entries(dataMap)) {
+            if (key.includes(target)) {
+                return val;
+            }
+        }
+        return '';
     }
 
     const get = (keys: string[]): string => {
@@ -92,12 +135,12 @@ async function fetchAndParseReceipt(receiptUrl: string): Promise<ReceiptData> {
         return '';
     };
 
-    const invoiceNo = get(['Invoice No', 'Invoice Number']);
-    const payerName = get(['Payer Name', 'Sender Name']);
-    const creditedPartyName = get(['Credited Party Name', 'Receiver Name']);
-    const creditedPartyAccount = get(['Credited Party Account', 'Receiver Account']);
-    const totalPaidStr = get(['Total Paid Amount', 'Amount', 'Total Amount']);
-    const paymentStatus = get(['Payment Status', 'Status']);
+    const invoiceNo = get(['invoice no', 'invoice number']);
+    const payerName = get(['payer name', 'sender name']);
+    const creditedPartyName = get(['credited party name', 'receiver name']);
+    const creditedPartyAccount = get(['credited party account', 'receiver account', 'credited party account no']);
+    const totalPaidStr = get(['total paid amount', 'amount', 'total amount', 'settled amount']);
+    const paymentStatus = get(['payment status', 'status', 'transaction status']);
 
     const missing = [
         !invoiceNo && 'Invoice No',
