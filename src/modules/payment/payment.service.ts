@@ -60,7 +60,7 @@ async function fetchAndParseReceipt(receiptUrl: string): Promise<ReceiptData> {
     const $ = cheerio.load(response.data);
 
     const dataMap: Record<string, string> = {};
-    $('tr').each((_i, row) => {
+    $('tr').each((_i: number, row: any) => {
         const cells = $(row).find('td');
         if (cells.length >= 2) {
             const label = $(cells[0]).text().trim();
@@ -72,7 +72,7 @@ async function fetchAndParseReceipt(receiptUrl: string): Promise<ReceiptData> {
     function findByLabel(label: string): string {
         if (dataMap[label.toLowerCase()]) return dataMap[label.toLowerCase()];
         let found = '';
-        $('td, th, dt, dd, span, p, div').each((_i, el) => {
+        $('td, th, dt, dd, span, p, div').each((_i: number, el: any) => {
             if ($(el).text().trim().toLowerCase() === label.toLowerCase()) {
                 const next = $(el).next();
                 if (next.length) { found = next.text().trim(); return false as any; }
