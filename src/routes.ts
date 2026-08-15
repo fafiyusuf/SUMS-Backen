@@ -12,8 +12,10 @@ import scheduleRoutes from './modules/schedule/schedule.routes';
 import settingsRoutes from './modules/settings/settings.routes';
 import stopRoutes from './modules/stop/stop.routes';
 import tapRoutes from './modules/tap/tap.routes';
-import telebirrRoutes from './modules/telebirr/telebirr.routes';
-import telebirrH5Routes from './modules/telebirrH5/telebirrH5.routes';
+// [LEGACY] Telebirr checkout & H5 APIs — replaced by receipt URL verification (/payments/verify)
+// Uncomment to re-enable if Telebirr direct integration is needed in the future
+// import telebirrRoutes from './modules/telebirr/telebirr.routes';
+// import telebirrH5Routes from './modules/telebirrH5/telebirrH5.routes';
 import tripRoutes from './modules/trip/trip.routes';
 import userRoutes from './modules/user/user.routes';
 import walletRoutes from './modules/wallet/wallet.routes';
@@ -31,8 +33,8 @@ router.use('/gps', locationLimiter, gpsRoutes);
 router.use('/incidents', incidentRoutes);
 router.use('/routes', routeRoutes);
 router.use('/stops', stopRoutes);
-router.use('/telebirr', telebirrRoutes);
-router.use('/telebirr-h5', telebirrH5Routes);
+// router.use('/telebirr', telebirrRoutes); // [LEGACY]
+// router.use('/telebirr-h5', telebirrH5Routes); // [LEGACY]
 router.use('/trips', locationLimiter, tripRoutes);
 router.use('/wallet', walletRoutes);
 router.use('/schedule', scheduleRoutes);

@@ -8,7 +8,7 @@ import {
     getAllTransactionsSchema,
     getRevenueSchema,
     getTransactionsSchema,
-    topupSchema
+    // topupSchema, // [LEGACY] — used by /topup route below
 } from './wallet.schema';
 
 const router: express.IRouter = express.Router();
@@ -37,46 +37,50 @@ const router: express.IRouter = express.Router();
 
 router.get('/', verifyToken, requireRole('passenger', 'admin'), walletController.getWallet);
 
-/**
- * @swagger
- * /wallet/topup:
- *   post:
- *     summary: Initiate a top-up transaction
- *     tags: [Wallet]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - amount
- *             properties:
- *               amount:
- *                 type: number
- *     responses:
- *       200:
- *         description: Topup initiated
- *       400:
- *         description: Validation error
- */
-
-router.post('/topup', verifyToken, requireRole('passenger'), validate(topupSchema), walletController.topup);
-
-// Note: Ensure webhook validation middleware exists or relies on telebirr signature checks
-/**
- * @swagger
- * /wallet/webhook/telebirr:
- *   post:
- *     summary: Telebirr webhook listener
- *     tags: [Wallet]
- *     responses:
- *       200:
- *         description: Webhook received
- */
-router.post('/webhook/telebirr', walletController.telebirrWebhook);
+// ─── LEGACY: Telebirr Checkout API ────────────────────────────────────────────
+// These routes belong to the old Telebirr checkout API flow.
+// The current top-up method uses receipt URL verification via POST /payments/verify.
+// Uncomment to re-enable when the checkout flow is needed again.
+//
+// /**
+//  * @swagger
+//  * /wallet/topup:
+//  *   post:
+//  *     summary: Initiate a top-up transaction (Telebirr checkout)
+//  *     tags: [Wallet]
+//  *     security:
+//  *       - bearerAuth: []
+//  *     requestBody:
+//  *       required: true
+//  *       content:
+//  *         application/json:
+//  *           schema:
+//  *             type: object
+//  *             required:
+//  *               - amount
+//  *             properties:
+//  *               amount:
+//  *                 type: number
+//  *     responses:
+//  *       200:
+//  *         description: Topup initiated
+//  *       400:
+//  *         description: Validation error
+//  */
+// router.post('/topup', verifyToken, requireRole('passenger'), validate(topupSchema), walletController.topup);
+//
+// /**
+//  * @swagger
+//  * /wallet/webhook/telebirr:
+//  *   post:
+//  *     summary: Telebirr webhook listener (Telebirr checkout)
+//  *     tags: [Wallet]
+//  *     responses:
+//  *       200:
+//  *         description: Webhook received
+//  */
+// router.post('/webhook/telebirr', walletController.telebirrWebhook);
+// ─── END LEGACY ───────────────────────────────────────────────────────────────
 
 /**
  * @swagger
