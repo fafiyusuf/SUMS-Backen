@@ -96,6 +96,24 @@ export class LocationService {
         }
     }
 
+    async getMultipleBusLocations(busIds: string[]): Promise<Record<string, LocationData>> {
+        if (!busIds.length) return {};
+        try {
+            const keys = busIds.map(id => `bus:${id}:location`);
+            const data = await this.redis.mget(...keys);
+            const result: Record<string, LocationData> = {};
+            data.forEach((locStr, index) => {
+                if (locStr) {
+                    result[busIds[index]] = JSON.parse(locStr);
+                }
+            });
+            return result;
+        } catch (error) {
+            console.error('Failed to fetch multiple live locations from Redis:', error);
+            return {};
+        }
+    }
+
     async getAllActiveBuses(): Promise<string[]> {
         return await this.redis.smembers('active:buses');
     }

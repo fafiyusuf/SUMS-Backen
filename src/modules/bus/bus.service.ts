@@ -68,37 +68,46 @@ export class BusService {
       order: [['createdAt', 'ASC']]
     });
 
-    // Format the result to include a 'location' property
-    const formattedBuses = await Promise.all(buses.map(async (bus: any) => {
-      const busJson = bus.toJSON();
+    const busIds = buses.map((b: any) => b.id);
+    const liveLocations = await locationService.getMultipleBusLocations(busIds);
 
-      // Try Redis first for live location
-      const liveLocation = await locationService.getBusLocation(bus.id);
-
-      if (liveLocation) {
-        busJson.location = {
-          latitude: liveLocation.latitude,
-          longitude: liveLocation.longitude,
-          lastUpdated: liveLocation.timestamp
-        };
-      } else {
-        // Fallback to database
-        const latestGps = await GPSCoordinate.findOne({
-          where: { busId: bus.id },
+    const missingGpsIds = busIds.filter((id) => !liveLocations[id]);
+    const fallbackLocations = await Promise.all(
+      missingGpsIds.map(busId =>
+        GPSCoordinate.findOne({
+          where: { busId },
           order: [['timestamp', 'DESC']]
-        });
-        if (latestGps) {
-          busJson.location = {
-            latitude: latestGps.latitude,
-            longitude: latestGps.longitude,
-            lastUpdated: latestGps.timestamp
-          };
-        }
+        })
+      )
+    );
+
+    const fallbackMap = fallbackLocations.reduce((map, gps: any) => {
+      if (gps) map[gps.busId] = gps;
+      return map;
+    }, {} as Record<string, any>);
+
+    const formattedBuses = buses.map((bus: any) => {
+      const busJson = bus.toJSON();
+      const live = liveLocations[bus.id];
+      const fallback = fallbackMap[bus.id];
+
+      if (live) {
+        busJson.location = {
+          latitude: live.latitude,
+          longitude: live.longitude,
+          lastUpdated: live.timestamp
+        };
+      } else if (fallback) {
+        busJson.location = {
+          latitude: fallback.latitude,
+          longitude: fallback.longitude,
+          lastUpdated: fallback.timestamp
+        };
       }
 
       delete busJson.gpsCoordinates;
       return busJson;
-    }));
+    });
 
     return { buses: formattedBuses, total, page, limit };
   }
