@@ -29,6 +29,7 @@ export const config = {
     origin: (process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:3001').split(',')
   },
   redis: {
+    url: process.env.REDIS_URL || '',
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10)
   },

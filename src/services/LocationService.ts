@@ -10,10 +10,12 @@ export class LocationService {
     private redis: Redis;
 
     constructor() {
-        this.redis = new Redis({
-            host: config.redis.host,
-            port: config.redis.port,
-        });
+        this.redis = config.redis.url
+            ? new Redis(config.redis.url)
+            : new Redis({
+                host: config.redis.host,
+                port: config.redis.port,
+            });
     }
 
     public async start() {
