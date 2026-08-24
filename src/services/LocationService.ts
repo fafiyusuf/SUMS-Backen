@@ -10,10 +10,12 @@ export class LocationService {
     private redis: Redis;
 
     constructor() {
-        this.redis = new Redis({
-            host: config.redis.host,
-            port: config.redis.port,
-        });
+        this.redis = config.redis.url
+            ? new Redis(config.redis.url)
+            : new Redis({
+                host: config.redis.host,
+                port: config.redis.port,
+            });
     }
 
     public async start() {
@@ -85,8 +87,31 @@ export class LocationService {
     }
 
     async getBusLocation(busId: string): Promise<LocationData | null> {
-        const data = await this.redis.get(`bus:${busId}:location`);
-        return data ? JSON.parse(data) : null;
+        try {
+            const data = await this.redis.get(`bus:${busId}:location`);
+            return data ? JSON.parse(data) : null;
+        } catch (error) {
+            console.error(`Failed to fetch live location from Redis for bus ${busId}:`, error);
+            return null;
+        }
+    }
+
+    async getMultipleBusLocations(busIds: string[]): Promise<Record<string, LocationData>> {
+        if (!busIds.length) return {};
+        try {
+            const keys = busIds.map(id => `bus:${id}:location`);
+            const data = await this.redis.mget(...keys);
+            const result: Record<string, LocationData> = {};
+            data.forEach((locStr, index) => {
+                if (locStr) {
+                    result[busIds[index]] = JSON.parse(locStr);
+                }
+            });
+            return result;
+        } catch (error) {
+            console.error('Failed to fetch multiple live locations from Redis:', error);
+            return {};
+        }
     }
 
     async getAllActiveBuses(): Promise<string[]> {

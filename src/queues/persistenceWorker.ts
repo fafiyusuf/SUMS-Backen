@@ -4,13 +4,15 @@ import config from '../config/env';
 import { GPSCoordinate, Bus } from '../modules/models';
 import { LocationData } from '../types/LocationProvider';
 
-const connectionOptions = {
-    host: config.redis.host,
-    port: config.redis.port,
-    maxRetriesPerRequest: null,
-};
+const connection = config.redis.url
+    ? new Redis(config.redis.url, { maxRetriesPerRequest: null })
+    : new Redis({
+        host: config.redis.host,
+        port: config.redis.port,
+        maxRetriesPerRequest: null,
+    });
 
-const redis = new Redis(connectionOptions);
+const redis = connection;
 const GPS_BATCH_KEY = 'gps:batch:buffer';
 const BATCH_SIZE = 50;
 const BATCH_FLUSH_INTERVAL_MS = 30000; // 30 seconds
@@ -29,7 +31,7 @@ export const persistenceWorker = new Worker('gps-location-persistence', async jo
     } catch (error) {
         console.error('Error buffering GPS data:', error);
     }
-}, { connection: connectionOptions });
+}, { connection: connection as any });
 
 // 2. Logic to flush batch to Database
 async function flushGpsBatch() {
