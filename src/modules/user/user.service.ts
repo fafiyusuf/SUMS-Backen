@@ -97,7 +97,7 @@ export class UserService {
 
     const bcrypt = require('bcryptjs');
     const saltRounds = 10;
-    const hashedPassword = bcrypt.hashSync(data.password, saltRounds);
+    const hashedPassword = await bcrypt.hash(data.password, saltRounds);
 
     const { sequelize } = require('../../config/database');
     const { Wallet } = require('../wallet/wallet.model');

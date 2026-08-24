@@ -2,9 +2,11 @@
  * Helper functions for common operations
  */
 
+import crypto from 'crypto';
+
 export const generateCardId = (): string => {
   const timestamp = Date.now().toString(36);
-  const randomStr = Math.random().toString(36).substring(2, 15);
+  const randomStr = crypto.randomBytes(8).toString('hex');
   return `${timestamp}${randomStr}`.toUpperCase();
 };
 

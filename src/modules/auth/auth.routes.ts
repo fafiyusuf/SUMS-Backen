@@ -202,7 +202,7 @@ router.post('/login/admin', authLimiter, validate(loginSchema), (req: Request, r
  *       401:
  *         description: Invalid refresh token
  */
-router.post('/refresh-token', (req: Request, res: Response, next: NextFunction) =>
+router.post('/refresh-token', authLimiter, (req: Request, res: Response, next: NextFunction) =>
   authController.refreshToken(req, res, next)
 );
 

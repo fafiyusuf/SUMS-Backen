@@ -25,9 +25,15 @@ async function startServer() {
     logger.info('Database connection established successfully');
 
     // 3. Sync database (Create/Update tables) - MUST happen before seeding
-    console.log('3. Syncing database (alter enabled)...');
-    await sequelize.sync({ alter: true });
-    logger.info('Database synchronized (schema updated)');
+    if (config.env === 'production') {
+      console.log('3. Production environment detected. Skipping alter sync...');
+      await sequelize.sync();
+      logger.info('Database synchronized (production schema check)');
+    } else {
+      console.log('3. Syncing database (alter enabled for dev)...');
+      await sequelize.sync({ alter: true });
+      logger.info('Database synchronized (schema updated)');
+    }
 
     // 4. Create HTTP server and initialize WebSockets
     console.log('4. Initializing HTTP & Socket server...');

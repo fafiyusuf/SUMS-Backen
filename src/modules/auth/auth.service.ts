@@ -50,7 +50,7 @@ export class AuthService {
 
       // Hash password
       const saltRounds = 10;
-      const hashedPassword = bcrypt.hashSync(userData.password, saltRounds);
+      const hashedPassword = await bcrypt.hash(userData.password, saltRounds);
 
       // Create user
       const user = await User.create({
@@ -101,7 +101,7 @@ export class AuthService {
       }
 
       const saltRounds = 10;
-      const hashedPassword = bcrypt.hashSync(driverData.password, saltRounds);
+      const hashedPassword = await bcrypt.hash(driverData.password, saltRounds);
 
       const user = await User.create({
         fullName: driverData.fullName,
@@ -117,7 +117,7 @@ export class AuthService {
       return {
         userId: user.id,
         email: user.email,
-        phone: user.phone ?? driverData.phone,
+        phone: driverData.phone ?? driverData.phone,
         fullName: user.fullName
       };
     } catch (error) {
@@ -154,7 +154,7 @@ export class AuthService {
         throw err;
       }
 
-      const isPasswordValid = bcrypt.compareSync(password, user.password);
+      const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         const err = new Error('Invalid credentials') as any;
         err.status = 401;

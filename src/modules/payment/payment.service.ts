@@ -226,10 +226,12 @@ export async function verifyReceipt(input: VerifyReceiptInput): Promise<VerifyRe
         throw createError(500, 'Receiver credentials (TELEBIRR_RECEIVER_NAME / TELEBIRR_RECEIVER_PHONE) are not configured.');
     }
     if (normalizeName(creditedPartyName) !== normalizeName(expectedName)) {
-        throw createError(400, `Receiver name mismatch. Expected "${expectedName}", got "${creditedPartyName}".`);
+        logger.warn(`[PaymentService] Receiver name mismatch. Expected "${expectedName}", got "${creditedPartyName}".`);
+        throw createError(400, 'Invalid receipt. Payment was not sent to the official SUMS account name.');
     }
     if (creditedPartyAccount.trim() !== expectedPhone.trim()) {
-        throw createError(400, `Receiver account mismatch. Expected "${expectedPhone}", got "${creditedPartyAccount}".`);
+        logger.warn(`[PaymentService] Receiver account mismatch. Expected "${expectedPhone}", got "${creditedPartyAccount}".`);
+        throw createError(400, 'Invalid receipt. Payment was not sent to the official SUMS receiver phone number.');
     }
 
     // Step 7: Load the authenticated user (no full-table scan)
