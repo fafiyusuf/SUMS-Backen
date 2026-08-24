@@ -65,15 +65,7 @@ export class BusService {
       where,
       limit,
       offset,
-      order: [['createdAt', 'ASC']],
-      include: [
-        {
-          model: GPSCoordinate,
-          as: 'gpsCoordinates',
-          limit: 1,
-          order: [['timestamp', 'DESC']]
-        }
-      ]
+      order: [['createdAt', 'ASC']]
     });
 
     // Format the result to include a 'location' property
@@ -89,14 +81,19 @@ export class BusService {
           longitude: liveLocation.longitude,
           lastUpdated: liveLocation.timestamp
         };
-      } else if (busJson.gpsCoordinates && busJson.gpsCoordinates.length > 0) {
+      } else {
         // Fallback to database
-        const latest = busJson.gpsCoordinates[0];
-        busJson.location = {
-          latitude: latest.latitude,
-          longitude: latest.longitude,
-          lastUpdated: latest.timestamp
-        };
+        const latestGps = await GPSCoordinate.findOne({
+          where: { busId: bus.id },
+          order: [['timestamp', 'DESC']]
+        });
+        if (latestGps) {
+          busJson.location = {
+            latitude: latestGps.latitude,
+            longitude: latestGps.longitude,
+            lastUpdated: latestGps.timestamp
+          };
+        }
       }
 
       delete busJson.gpsCoordinates;
