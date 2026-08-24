@@ -87,8 +87,13 @@ export class LocationService {
     }
 
     async getBusLocation(busId: string): Promise<LocationData | null> {
-        const data = await this.redis.get(`bus:${busId}:location`);
-        return data ? JSON.parse(data) : null;
+        try {
+            const data = await this.redis.get(`bus:${busId}:location`);
+            return data ? JSON.parse(data) : null;
+        } catch (error) {
+            console.error(`Failed to fetch live location from Redis for bus ${busId}:`, error);
+            return null;
+        }
     }
 
     async getAllActiveBuses(): Promise<string[]> {
