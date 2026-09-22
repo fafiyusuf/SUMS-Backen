@@ -46,43 +46,33 @@ export class LocationService {
     }
 
     private async handleLocationUpdate(data: LocationData) {
+        // 1. Broadcast via WebSocket FIRST (this drives the live map)
+        const io = socketServer.getIO();
+        if (io) {
+            io.to(`bus-${data.busId}`).emit('location-update', {
+                ...data,
+                timestamp: new Date()
+            });
+            io.emit('all-locations', { [data.busId]: data });
+            io.emit('bus:position_update', data);
+        }
+
+        // 2. Update Redis Live Cache (non-blocking for simulation)
         try {
-            // 1. Update Redis Live Cache
             const busKey = `bus:${data.busId}:location`;
             await this.redis.set(busKey, JSON.stringify(data));
-
-            // Update active buses set
             await this.redis.sadd('active:buses', data.busId);
-
-            // Update route-specific bus set
             await this.redis.sadd(`route:${data.routeId}:buses`, data.busId);
-
-            // 2. Broadcast via WebSocket
-            const io = socketServer.getIO();
-            if (io) {
-                // Broadcast to specific bus room
-                io.to(`bus-${data.busId}`).emit('location-update', {
-                    ...data,
-                    timestamp: new Date()
-                });
-
-                // Broadcast to all (for fleet view)
-                io.emit('all-locations', { [data.busId]: data });
-
-                // Standardized position update event
-                io.emit('bus:position_update', data);
-
-                console.debug(`📡 Broadcasting location for bus ${data.busId} at ${data.latitude}, ${data.longitude}`);
-            } else {
-                console.warn('Socket.io not initialized, skipping broadcast');
-            }
-
-            // 3. Queue for persistence and analytics
-            await locationPersistenceQueue.add('persist-gps', data);
-
-            // console.debug(`Location updated for bus ${data.busId} at ${data.latitude}, ${data.longitude}`);
         } catch (error) {
-            console.error('Error handling location update:', error);
+            // Redis may be unavailable; log but don't block simulation
+            console.error('Redis cache update failed (simulation continues):', (error as Error).message);
+        }
+
+        // 3. Queue for persistence (non-blocking for simulation)
+        try {
+            await locationPersistenceQueue.add('persist-gps', data);
+        } catch (error) {
+            console.error('BullMQ persistence queue failed (simulation continues):', (error as Error).message);
         }
     }
 
