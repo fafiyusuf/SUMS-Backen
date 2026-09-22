@@ -1,8 +1,8 @@
 import express from 'express';
 import scheduleController from './schedule.controller';
-import verifyToken from '@/middleware/authMiddleware';
-import requireRole from '@/middleware/roleMiddleware';
-import { validate } from '@/middleware/validate';
+import verifyToken from '../../middleware/authMiddleware';
+import requireRole from '../../middleware/roleMiddleware';
+import { validate } from '../../middleware/validate';
 import { createScheduleSchema, updateScheduleSchema, getRouteSchedulesSchema, deleteScheduleSchema } from './schedule.schema';
 
 const router: express.IRouter = express.Router();

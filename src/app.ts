@@ -16,9 +16,21 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet());
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://sums-web.vercel.app/',
+];
+
 app.use(cors({
-  origin: config.cors.origin.includes('*') ? '*' : config.cors.origin,
-  credentials: true
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 }));
 app.use(morgan('dev'));
 app.use(express.json());

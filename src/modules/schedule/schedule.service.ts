@@ -1,4 +1,4 @@
-import { Schedule } from '@/modules/models';
+import { Schedule } from '../models';
 
 class ScheduleService {
   async getSchedulesByRoute(routeId: string) {
