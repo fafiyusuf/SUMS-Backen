@@ -28,7 +28,7 @@ export const config = {
   cors: {
     origin: (process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:5173')
       .split(',')
-      .map(o => o.trim())
+      .map(o => o.trim().replace(/^["']|["']$/g, '').replace(/\/$/, ''))
       .filter(Boolean)
   },
   redis: {

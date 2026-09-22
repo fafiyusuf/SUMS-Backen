@@ -17,23 +17,15 @@ app.set('trust proxy', 1);
 // Middleware
 app.use(helmet());
 
-const allowedOrigins = config.cors.origin;
-
-// Preflight options specific handling to avoid 500 error if CORS origin mismatch happens in options
-app.options('*', cors({
-  origin: allowedOrigins,
+const corsOptions = {
+  origin: config.cors.origin,
   credentials: true,
-}));
+};
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error(`CORS blocked origin: ${origin}`));
-  },
-  credentials: true,
-}));
+// Preflight options specific handling
+app.options('*', cors(corsOptions));
+// Main application middleware handling
+app.use(cors(corsOptions));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
