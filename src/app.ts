@@ -17,15 +17,24 @@ app.set('trust proxy', 1);
 // Middleware
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
-const corsOptions = {
-  origin: config.cors.origin,
-  credentials: true,
-};
-
 // Preflight options specific handling
-app.options('*', cors(corsOptions));
+app.options('*', cors({
+  origin: config.cors.origin,
+  credentials: true
+}));
+
 // Main application middleware handling
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || config.cors.origin.includes(origin)) {
+      return callback(null, true);
+    }
+    // DO NOT throw new Error() as it triggers a 500 server response.
+    // Let CORS block it gracefully using false.
+    return callback(null, false);
+  },
+  credentials: true,
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
