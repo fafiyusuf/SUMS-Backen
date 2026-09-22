@@ -16,19 +16,21 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(helmet());
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'https://sums-web.vercel.app/',
-];
+
+const allowedOrigins = config.cors.origin;
+
+// Preflight options specific handling to avoid 500 error if CORS origin mismatch happens in options
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
 
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+      return callback(null, true);
     }
+    return callback(new Error(`CORS blocked origin: ${origin}`));
   },
   credentials: true,
 }));

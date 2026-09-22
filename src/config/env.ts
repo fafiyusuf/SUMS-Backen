@@ -26,7 +26,10 @@ export const config = {
     checkoutBaseUrl: process.env.TELEBIRR_CHECKOUT_BASE_URL || ''
   },
   cors: {
-    origin: (process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:3001').split(',')
+    origin: (process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:5173')
+      .split(',')
+      .map(o => o.trim())
+      .filter(Boolean)
   },
   redis: {
     url: process.env.REDIS_URL || '',
@@ -42,5 +45,12 @@ export const config = {
     receiverPhone: process.env.TELEBIRR_RECEIVER_PHONE || ''
   }
 };
+
+// Validate require environment variables for Production
+if (config.env === 'production') {
+  if (!config.redis.url) {
+    throw new Error('FATAL ERROR: REDIS_URL environment variable is missing in production. Ensure Render environment variables are properly configured.');
+  }
+}
 
 export default config;
